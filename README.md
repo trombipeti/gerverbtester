@@ -1,0 +1,4 @@
+gerverbtester
+=============
+
+Német rendhagyóige-kikérdező
