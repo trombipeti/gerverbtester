@@ -33,9 +33,9 @@ public class VerbTester {
 
 	public Verb getNext() {
 		Verb ret = null;
-		if(curIndex < verbs.size()) {
+		if (curIndex < verbs.size()) {
 			ret = verbs.get(curIndex);
-			curIndex = (curIndex + 1)%verbs.size();
+			curIndex = (curIndex + 1) % verbs.size();
 		}
 		return ret;
 	}
@@ -43,19 +43,19 @@ public class VerbTester {
 	public void skip(Verb v) {
 		verbs.remove(v);
 		v.setSkipped(true);
-		curIndex = (curIndex + 1)%verbs.size();
+		curIndex = (curIndex + 1) % verbs.size();
 		verbs.add(v);
 	}
-	
+
 	public void remove(int index) {
 		verbs.remove(index);
-		if(index < curIndex) {
+		if (index < curIndex) {
 			curIndex -= 1;
 		}
 	}
-	
+
 	public void remove(Verb v) {
-		if(verbs.indexOf(v) < curIndex) {
+		if (verbs.indexOf(v) < curIndex) {
 			curIndex -= 1;
 		}
 		verbs.remove(v);
@@ -77,7 +77,7 @@ public class VerbTester {
 				String[] v = line.split(";", 5);
 				if (v.length != 5) {
 					JOptionPane pane = new JOptionPane(
-							"<html>A "
+							"<html>A(z) "
 									+ verbsFileCanonicalPath
 									+ " fájl "
 									+ i
@@ -99,8 +99,9 @@ public class VerbTester {
 				}
 				verbs.add(new Verb(v));
 			}
+			br.close();
 		} catch (FileNotFoundException e) {
-			e.printStackTrace();
+
 		} catch (IOException e) {
 			e.printStackTrace();
 		} catch (Exception e) {
