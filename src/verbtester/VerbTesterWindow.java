@@ -5,6 +5,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentEvent;
@@ -18,6 +19,7 @@ import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -57,7 +59,6 @@ public class VerbTesterWindow extends JFrame {
 	// actionBtnsPanel-ben balról-jobbra:
 	private JButton checkBtn;
 	private JButton hintBtn;
-	private JButton nextBtn;
 	// bottomPanelben középen kitöltve
 	private JLabel infoLabel;
 
@@ -81,13 +82,28 @@ public class VerbTesterWindow extends JFrame {
 			public void actionPerformed(ActionEvent e) {
 				// currentVerb = verbs.getNext();
 				topPanel.remove(startBtn);
-				// TODO Az inputok fölé kéne egy-egy label a nevével
 				// Felső panel és a benne lévő inputok
-				topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.Y_AXIS));
-				topPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-				inputs = new JTextField[5];
-				for (int i = 0; i < 5; ++i) {
+				topPanel.setLayout(new BorderLayout(5, 5));
+				topPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10,
+						10));
+				inputs = new JTextField[5 * 5];
+				JPanel rightPanel = new JPanel(new GridLayout(6, 1, 5, 5));
+				rightPanel.add(new JCheckBox("Összeset"));
+				for(int j = 0; j < 5;++j) {
+					rightPanel.add(new JCheckBox("Átugrás"));
+				}
+				topPanel.add(rightPanel, BorderLayout.EAST);
+
+				JPanel leftPanel = new JPanel(new GridLayout(6, 5, 5, 5));
+				// TODO ezeknek kell a normális oszlopnév!
+				String[] colNames = { "Első", "Második", "Harmadik",
+						"Negyedik", "Magyar" };
+				for (String s : colNames) {
+					leftPanel.add(new JLabel(s, SwingConstants.CENTER));
+				}
+				for (int i = 0; i < 5 * 5; ++i) {
 					inputs[i] = new JTextField();
+					inputs[i].setHorizontalAlignment(SwingConstants.CENTER);
 					inputs[i].setFocusable(true);
 					inputs[i]
 							.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 12));
@@ -114,9 +130,10 @@ public class VerbTesterWindow extends JFrame {
 							t.setSelectionEnd(t.getText().length());
 						}
 					});
-					topPanel.add(inputs[i]);
-					topPanel.add(Box.createRigidArea(new Dimension(0,5)));
+					leftPanel.add(inputs[i]);
+					// topPanel.add(Box.createRigidArea(new Dimension(0,5)));
 				}
+				topPanel.add(leftPanel, BorderLayout.CENTER);
 				gameLabel.setText("");
 				actionBtnsPanel.setVisible(true);
 				getNewVerb();
@@ -162,8 +179,13 @@ public class VerbTesterWindow extends JFrame {
 					maxscore += 4;
 					score += curscore;
 				}
-				infoLabel.setText("Pontszám: " + score + "/" + maxscore + " ("
-						+ String.format("%.2f",(score / (double) maxscore) * 100.0) + "%)");
+				infoLabel.setText("Pontszám: "
+						+ score
+						+ "/"
+						+ maxscore
+						+ " ("
+						+ String.format("%.2f",
+								(score / (double) maxscore) * 100.0) + "%)");
 				// if (score == 1.0) {
 				// verbs.remove(currentVerb);
 				// } else {
@@ -174,20 +196,9 @@ public class VerbTesterWindow extends JFrame {
 			}
 		});
 		hintBtn = new JButton("Segítségkérés");
-		nextBtn = new JButton("Átugrás");
-		nextBtn.addActionListener(new ActionListener() {
 
-			@Override
-			public void actionPerformed(ActionEvent arg0) {
-				if (currentVerb != null) {
-					verbs.skip(currentVerb);
-				}
-				getNewVerb();
-			}
-		});
 		actionBtnsPanel.add(checkBtn);
 		actionBtnsPanel.add(hintBtn);
-		actionBtnsPanel.add(nextBtn);
 		actionBtnsPanel.setVisible(false);
 		bottomPanel.add(actionBtnsPanel, BorderLayout.CENTER);
 		infoLabel = new JLabel("", SwingConstants.CENTER);
@@ -235,17 +246,14 @@ public class VerbTesterWindow extends JFrame {
 			int shown = randgen.nextInt(5);
 			for (JTextField f : inputs) {
 				f.setEditable(true);
-				f.setEnabled(true);	
+				f.setEnabled(true);
 				f.setText("");
 				f.setForeground(UIManager.getColor("TextField.Foreground"));
 			}
 			inputs[shown].setEditable(false);
 			inputs[shown].setForeground(Color.ORANGE);
-//			inputs[shown].setEnabled(false);
+			// inputs[shown].setEnabled(false);
 			inputs[shown].setText(currentVerb.alak(shown));
-			if (currentVerb.isSkipped()) {
-				nextBtn.setEnabled(false);
-			}
 		}
 	}
 
@@ -273,7 +281,7 @@ public class VerbTesterWindow extends JFrame {
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		pack();
 		setSize(new Dimension(640, 480));
-		setMinimumSize(new Dimension(270, 270));
+		setMinimumSize(new Dimension(500, 270));
 		score = 0;
 	}
 
