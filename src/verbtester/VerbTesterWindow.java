@@ -16,10 +16,8 @@ import java.util.Date;
 import java.util.Random;
 
 import javax.swing.BorderFactory;
-import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
-import javax.swing.JCheckBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -43,10 +41,13 @@ public class VerbTesterWindow extends JFrame {
 
 	private JLabel gameLabel;
 	private JPanel topPanel;
-	// topPanelben sorban 4 input, tömbbe rakjuk
+	// topPanelben 5*4 input, tömbbe rakjuk
 	private JTextField[] inputs;
 	// Ha nem aktív a játék, akkor pedig egy nagy "Start" gomb van
 	private JButton startBtn;
+
+	private RootCheckBox checkAllCheckBox;
+	private SlaveCheckBox[] skippers;
 	// topPanel vége
 
 	// topPanel alatt
@@ -66,7 +67,6 @@ public class VerbTesterWindow extends JFrame {
 	// private JButton helpBtn;
 
 	private void initComponents() {
-		JPanel vmi = new JPanel(new BorderLayout());
 		setLayout(new BorderLayout());
 		// Legfelső panel
 		gameLabel = new JLabel("Klikk a Start gombra :)");
@@ -88,10 +88,14 @@ public class VerbTesterWindow extends JFrame {
 						10));
 				inputs = new JTextField[5 * 5];
 				JPanel rightPanel = new JPanel(new GridLayout(6, 1, 5, 5));
-				rightPanel.add(new JCheckBox("Összeset"));
-				for(int j = 0; j < 5;++j) {
-					rightPanel.add(new JCheckBox("Átugrás"));
+				checkAllCheckBox = new RootCheckBox();
+				rightPanel.add(checkAllCheckBox);
+				skippers = new SlaveCheckBox[5];
+				for (int j = 0; j < 5; ++j) {
+					skippers[j] = new SlaveCheckBox(checkAllCheckBox);
+					rightPanel.add(skippers[j]);
 				}
+				checkAllCheckBox.setSlaves(skippers);
 				topPanel.add(rightPanel, BorderLayout.EAST);
 
 				JPanel leftPanel = new JPanel(new GridLayout(6, 5, 5, 5));
@@ -142,6 +146,7 @@ public class VerbTesterWindow extends JFrame {
 			}
 		});
 		topPanel.add(startBtn);
+		JPanel vmi = new JPanel(new BorderLayout());
 		JPanel topp = new JPanel();
 		topp.setLayout(new BoxLayout(topp, BoxLayout.PAGE_AXIS));
 		topp.add(gameLabel);

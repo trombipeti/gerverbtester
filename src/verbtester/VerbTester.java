@@ -30,6 +30,16 @@ public class VerbTester {
 		readVerbsIn();
 		curIndex = 0;
 	}
+	
+	public VerbTester(String verbsFileName) {
+		try {
+			verbsFileCanonicalPath = new File(verbsFileName).getCanonicalPath();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		readVerbsIn();
+		curIndex = 0;
+	}
 
 	public Verb getNext() {
 		Verb ret = null;
@@ -75,6 +85,9 @@ public class VerbTester {
 					continue;
 				line = line.replaceAll("#.*", "");
 				String[] v = line.split(";", 5);
+				// Ha nincs meg mind az 5 alak,
+				// 5 másodpercig megjelenítünk
+				// egy panaszkodó ablakot.
 				if (v.length != 5) {
 					JOptionPane pane = new JOptionPane(
 							"<html>A(z) "
@@ -86,6 +99,8 @@ public class VerbTester {
 									+ "<br>Az ott szereplő igét nem fogom használni.</html>",
 							JOptionPane.INFORMATION_MESSAGE);
 					final JDialog d = pane.createDialog("Hiányos ige");
+					// 5 másodpercig megy jelenleg. Lehet ezt módosítani még,
+					// ha esetleg ez is túl sok idő.
 					new Timer().schedule(new TimerTask() {
 
 						@Override
@@ -94,9 +109,10 @@ public class VerbTester {
 								d.setVisible(false);
 							}
 						}
-					}, 5000);
+					}, 5000); // <- ezt a számot kell módosítani :)
 					d.setVisible(true);
 				}
+				// Eltároljuk jól
 				verbs.add(new Verb(v));
 			}
 			br.close();
