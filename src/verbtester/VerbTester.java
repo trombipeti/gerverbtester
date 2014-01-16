@@ -70,6 +70,34 @@ public class VerbTester {
 		}
 		verbs.remove(v);
 	}
+	
+	public boolean contains(Verb v) {
+		return verbs.contains((Object)v);
+	}
+	
+	public int verbMatchScore(Verb v) {
+		int ret = 0;
+		if(contains(v)) {
+			ret = 5;
+		} else {
+			for(Verb s: verbs) {
+				int c = 0;
+				for(int i=0;i<5;++i) {
+					System.out.println(s.alak(i)+":"+v.alak(i));
+					if(s.alak(i).equals(v.alak(i))) {
+						c += 1;
+					}
+				}
+				System.out.println(c);
+				if(c > ret) {
+					ret = c;
+				}
+			}
+		}
+		System.out.println("verbMatchScore:"+ret);
+		System.out.println(v.toString());
+		return ret;
+	}
 
 	private void readVerbsIn() {
 		try {

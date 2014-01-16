@@ -4,6 +4,11 @@ public class Verb {
 	private String[] alakok;
 	private boolean skipped;
 	
+	public Verb() {
+		skipped = false;
+		alakok = new String[5];
+	}
+	
 	public Verb(String[] a) throws Exception {
 		if(a.length < 5) {
 			throw new Exception("Hiányos az ige...");
@@ -17,6 +22,10 @@ public class Verb {
 	
 	public String alak(int i) {
 		return alakok[i];
+	}
+	
+	public void setAlak(int i, String alak) {
+		alakok[i] = alak;
 	}
 	
 	public boolean isSkipped() {

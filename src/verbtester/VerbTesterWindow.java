@@ -34,7 +34,7 @@ public class VerbTesterWindow extends JFrame {
 	private static final long serialVersionUID = 2240584624816230669L;
 
 	private VerbTester verbs;
-	private Verb currentVerb;
+	private Verb[] currentVerbs;
 
 	private int score;
 	private int maxscore = 0;
@@ -100,7 +100,7 @@ public class VerbTesterWindow extends JFrame {
 
 				JPanel leftPanel = new JPanel(new GridLayout(6, 5, 5, 5));
 				// TODO ezeknek kell a normális oszlopnév!
-				String[] colNames = { "Első", "Második", "Harmadik",
+				String[] colNames = { "Infinitive", "Második", "Harmadik",
 						"Negyedik", "Magyar" };
 				for (String s : colNames) {
 					leftPanel.add(new JLabel(s, SwingConstants.CENTER));
@@ -140,7 +140,7 @@ public class VerbTesterWindow extends JFrame {
 				topPanel.add(leftPanel, BorderLayout.CENTER);
 				gameLabel.setText("");
 				actionBtnsPanel.setVisible(true);
-				getNewVerb();
+				getNewVerbs();
 				repaint();
 				validate();
 			}
@@ -168,22 +168,22 @@ public class VerbTesterWindow extends JFrame {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				int curscore = 0;
-				int i = 0;
-				for (JTextField f : inputs) {
-					if (f.isEditable() == false) {
-						++i;
+				for(int i=0;i<5;++i) {
+					if(currentVerbs[i].isSkipped()) {
 						continue;
 					}
-					if (f.getText().toLowerCase()
-							.equals(currentVerb.alak(i).toLowerCase())) {
-						curscore += 1;
+					Verb v = new Verb();
+					for(int j=0;j<5;++j) {
+						v.setAlak(j, inputs[i*5 + j].getText());
 					}
-					++i;
-				}
-				if (currentVerb.isSkipped() == false) {
 					maxscore += 4;
-					score += curscore;
+					if(verbs.contains(v)) {
+						curscore += 4;
+					} else {
+						// Ami meg volt adva azt nem számoljuk.
+						curscore += verbs.verbMatchScore(v) - 1; 					}
 				}
+				score += curscore;
 				infoLabel.setText("Pontszám: "
 						+ score
 						+ "/"
@@ -196,8 +196,10 @@ public class VerbTesterWindow extends JFrame {
 				// } else {
 				// verbs.skip(currentVerb);
 				// }
-				verbs.remove(currentVerb);
-				getNewVerb();
+				for (Verb v : currentVerbs) {
+					verbs.remove(v);
+				}
+				getNewVerbs();
 			}
 		});
 		hintBtn = new JButton("Segítségkérés");
@@ -240,25 +242,29 @@ public class VerbTesterWindow extends JFrame {
 		});
 	}
 
-	protected void getNewVerb() {
-		currentVerb = verbs.getNext();
-		if (currentVerb == null) {
+	protected void getNewVerbs() {
+		for (int i = 0; i < currentVerbs.length; ++i) {
+			currentVerbs[i] = verbs.getNext();
+		}
+		if (currentVerbs[0] == null) {
 			// TODO end game
 			System.out.println("Vége");
 			actionBtnsPanel.setVisible(false);
 		} else {
-			Random randgen = new Random(new Date().getTime());
-			int shown = randgen.nextInt(5);
 			for (JTextField f : inputs) {
 				f.setEditable(true);
 				f.setEnabled(true);
 				f.setText("");
 				f.setForeground(UIManager.getColor("TextField.Foreground"));
 			}
-			inputs[shown].setEditable(false);
-			inputs[shown].setForeground(Color.ORANGE);
-			// inputs[shown].setEnabled(false);
-			inputs[shown].setText(currentVerb.alak(shown));
+			Random randgen = new Random(new Date().getTime());
+			for (int i = 0; i < 5; ++i) {
+				int shown = randgen.nextInt(5);
+				inputs[i*5+shown].setEditable(false);
+				inputs[i*5+shown].setForeground(Color.ORANGE);
+				// inputs[shown].setEnabled(false);
+				inputs[i*5+shown].setText(currentVerbs[i].alak(shown));
+			}
 		}
 	}
 
@@ -282,6 +288,7 @@ public class VerbTesterWindow extends JFrame {
 	public VerbTesterWindow() {
 		super("Német rendhagyóige-kikérdező");
 		verbs = new VerbTester();
+		currentVerbs = new Verb[5];
 		initComponents();
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		pack();
