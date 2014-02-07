@@ -20,13 +20,14 @@ public class VerbTester {
 
 	public VerbTester() {
 		try {
-			verbsFileCanonicalPath = (new File(System.getProperty("user.home"),
-					"VerbTester")).getCanonicalPath();
+//			verbsFileCanonicalPath = (new File(System.getProperty("user.home"),
+//					"VerbTester")).getCanonicalPath();
 			verbsFileCanonicalPath = new File(verbsFileCanonicalPath,
 					"verbs.csv").getCanonicalPath();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		System.out.println(verbsFileCanonicalPath);
 		readVerbsIn();
 		curIndex = 0;
 	}
@@ -43,9 +44,12 @@ public class VerbTester {
 
 	public Verb getNext() {
 		Verb ret = null;
-		if (curIndex < verbs.size()) {
+		if (curIndex < verbs.size() && curIndex >= 0) {
 			ret = verbs.get(curIndex);
-			curIndex = (curIndex + 1) % verbs.size();
+			++curIndex;
+			System.out.println(curIndex);
+		} else {
+			System.out.println("Returning NULL");
 		}
 		return ret;
 	}
@@ -71,6 +75,10 @@ public class VerbTester {
 		verbs.remove(v);
 	}
 	
+	public void add(Verb v) {
+		verbs.add(v);
+	}
+	
 	public boolean contains(Verb v) {
 		return verbs.contains((Object)v);
 	}
@@ -83,19 +91,15 @@ public class VerbTester {
 			for(Verb s: verbs) {
 				int c = 0;
 				for(int i=0;i<5;++i) {
-					System.out.println(s.alak(i)+":"+v.alak(i));
 					if(s.alak(i).equals(v.alak(i))) {
 						c += 1;
 					}
 				}
-				System.out.println(c);
 				if(c > ret) {
 					ret = c;
 				}
 			}
 		}
-		System.out.println("verbMatchScore:"+ret);
-		System.out.println(v.toString());
 		return ret;
 	}
 
