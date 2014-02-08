@@ -6,6 +6,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -20,18 +21,14 @@ public class VerbTester {
 
 	public VerbTester() {
 		try {
-//			verbsFileCanonicalPath = (new File(System.getProperty("user.home"),
-//					"VerbTester")).getCanonicalPath();
-			verbsFileCanonicalPath = new File(verbsFileCanonicalPath,
-					"verbs.csv").getCanonicalPath();
+			verbsFileCanonicalPath = new File("verbs.csv").getCanonicalPath();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		System.out.println(verbsFileCanonicalPath);
 		readVerbsIn();
 		curIndex = 0;
 	}
-	
+
 	public VerbTester(String verbsFileName) {
 		try {
 			verbsFileCanonicalPath = new File(verbsFileName).getCanonicalPath();
@@ -44,12 +41,9 @@ public class VerbTester {
 
 	public Verb getNext() {
 		Verb ret = null;
-		if (curIndex < verbs.size() && curIndex >= 0) {
+		if (curIndex < /* 10 */verbs.size() && curIndex >= 0) {
 			ret = verbs.get(curIndex);
 			++curIndex;
-			System.out.println(curIndex);
-		} else {
-			System.out.println("Returning NULL");
 		}
 		return ret;
 	}
@@ -74,28 +68,37 @@ public class VerbTester {
 		}
 		verbs.remove(v);
 	}
-	
+
 	public void add(Verb v) {
 		verbs.add(v);
 	}
-	
+
 	public boolean contains(Verb v) {
-		return verbs.contains((Object)v);
+		return verbs.contains(v);
 	}
-	
-	public int verbMatchScore(Verb v) {
+
+	public int verbMatchScore(Verb v, List<String> hints) {
 		int ret = 0;
-		if(contains(v)) {
+		if (contains(v)) {
 			ret = 5;
+			if (hints != null) {
+				ret -= hints.size();
+			}
 		} else {
-			for(Verb s: verbs) {
+			for (Verb s : verbs) {
 				int c = 0;
-				for(int i=0;i<5;++i) {
-					if(s.alak(i).equals(v.alak(i))) {
+				boolean containsHint = false;
+				for (int i = 0; i < 5; ++i) {
+					if (s.alak(i).equals(v.alak(i))) {
 						c += 1;
 					}
+					if (!containsHint && hints != null
+							&& hints.contains(v.alak(i))) {
+						c -= 1;
+						containsHint = true;
+					}
 				}
-				if(c > ret) {
+				if (c > ret) {
 					ret = c;
 				}
 			}
@@ -108,7 +111,7 @@ public class VerbTester {
 			BufferedReader br = new BufferedReader(new FileReader(
 					verbsFileCanonicalPath));
 			int i = 0;
-			while (true) {
+			while (true && i < 50) {
 				++i;
 				String line = br.readLine();
 				if (line == null)

@@ -1,7 +1,6 @@
 package verbtester;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -12,7 +11,9 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Random;
 
 import javax.swing.BorderFactory;
@@ -29,14 +30,28 @@ import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.text.DefaultHighlighter;
 import javax.swing.text.JTextComponent;
 
-import org.omg.PortableServer.ID_ASSIGNMENT_POLICY_ID;
-
 public class VerbTesterWindow extends JFrame {
+
+	public static enum GradeLimits {
+		ONE(0), TWO(60), THREE(70), FOUR(80), FIVE(90);
+
+		private final int val;
+
+		private GradeLimits(int value) {
+			val = value;
+		}
+
+		public int getValue() {
+			return val;
+		}
+
+	}
 
 	private static final long serialVersionUID = 2240584624816230669L;
 
 	private VerbTester verbs;
-	private Verb[] currentVerbs;
+	private Verb[] currentVerbs = new Verb[10];
+	private int[] shownFields = new int[10];
 
 	private int score;
 	private int maxscore = 0;
@@ -60,15 +75,32 @@ public class VerbTesterWindow extends JFrame {
 	// bottomPanelben baloldalt
 	private JPanel actionBtnsPanel;
 	// actionBtnsPanel-ben balról-jobbra:
-	private JButton checkNextBtn;
+	private JButton gameControlBtn;
 	private JButton hintBtn;
 	// bottomPanelben középen kitöltve
 	private JLabel infoLabel;
 
 	protected boolean currentGuessesChecked = false;
+	protected boolean gameEnded = false;
+
+	private int curVerbNum = 0;
 
 	// bottomPanelben jobboldalt
 	// private JButton helpBtn;
+
+	private static enum GameControlState {
+		NEED_CHECK, CAN_HAVE_NEXT, GAME_ENDED
+	}
+
+	private GameControlState gameState = GameControlState.NEED_CHECK;
+
+	static class GameConstants {
+		public static String START = "Start";
+		public static String NEXT = "Következő";
+		public static String RESTART = "Újrakezdés";
+		public static String CHECK = "Ellenőrzés";
+		public static String HINT = "Segítségkérés";
+	}
 
 	private void initComponents() {
 		setLayout(new BorderLayout());
@@ -79,71 +111,12 @@ public class VerbTesterWindow extends JFrame {
 		gameLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 		gameLabel.setAlignmentY(Component.CENTER_ALIGNMENT);
 		topPanel = new JPanel();
-		startBtn = new JButton("Start");
+		startBtn = new JButton(GameConstants.START);
 		startBtn.addActionListener(new ActionListener() {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				// currentVerb = verbs.getNext();
-				topPanel.remove(startBtn);
-				// Felső panel és a benne lévő inputok
-				topPanel.setLayout(new BorderLayout(5, 5));
-				topPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10,
-						10));
-				inputs = new JTextField[5 * 5];
-				JPanel rightPanel = new JPanel(new GridLayout(6, 1, 5, 5));
-				checkAllCheckBox = new RootCheckBox();
-				rightPanel.add(checkAllCheckBox);
-				skippers = new SlaveCheckBox[5];
-				for (int j = 0; j < 5; ++j) {
-					skippers[j] = new SlaveCheckBox(checkAllCheckBox,j);
-					rightPanel.add(skippers[j]);
-				}
-				checkAllCheckBox.setSlaves(skippers);
-				topPanel.add(rightPanel, BorderLayout.EAST);
-
-				JPanel leftPanel = new JPanel(new GridLayout(6, 5, 5, 5));
-				// TODO ezeknek kell a normális oszlopnév!
-				String[] colNames = { "Infinitive", "Második", "Harmadik",
-						"Negyedik", "Magyar" };
-				for (String s : colNames) {
-					leftPanel.add(new JLabel(s, SwingConstants.CENTER));
-				}
-				for (int i = 0; i < 5 * 5; ++i) {
-					inputs[i] = new JTextField();
-					inputs[i].setHorizontalAlignment(SwingConstants.CENTER);
-					inputs[i].setFocusable(true);
-					inputs[i]
-							.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 12));
-					inputs[i].addFocusListener(new FocusListener() {
-
-						@Override
-						public void focusLost(FocusEvent arg0) {
-							JTextComponent t = ((JTextComponent) arg0
-									.getComponent());
-							if (t != null) {
-								t.setSelectionEnd(0);
-							}
-						}
-
-						@Override
-						public void focusGained(FocusEvent arg0) {
-							JTextComponent t = ((JTextComponent) arg0
-									.getComponent());
-							if (t.getCaret() != null) {
-								t.getCaret().setVisible(true);
-							}
-							t.setHighlighter(new DefaultHighlighter());
-							t.setSelectionStart(0);
-							t.setSelectionEnd(t.getText().length());
-						}
-					});
-					leftPanel.add(inputs[i]);
-					// topPanel.add(Box.createRigidArea(new Dimension(0,5)));
-				}
-				topPanel.add(leftPanel, BorderLayout.CENTER);
-				gameLabel.setText("");
-				actionBtnsPanel.setVisible(true);
+				initGameComponents();
 				startNewGame();
 			}
 		});
@@ -164,27 +137,46 @@ public class VerbTesterWindow extends JFrame {
 		bottomPanel = new JPanel(new BorderLayout());
 		actionBtnsPanel = new JPanel();
 		// Az ellenőriz+segítségkérés+következő gombok egy panelbe balra
-		checkNextBtn = new JButton("Ellenőrzés");
-		checkNextBtn.addActionListener(new ActionListener() {
+		gameControlBtn = new JButton(GameConstants.CHECK);
+		gameControlBtn.addActionListener(new ActionListener() {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				if (currentGuessesChecked) {
-					getNewVerbs();
-					currentGuessesChecked = false;
-					checkNextBtn.setText("Ellenőrzés");
-				} else {
+				switch (gameState) {
+				case NEED_CHECK:
 					checkGuesses();
-					currentGuessesChecked = true;
-					checkNextBtn.setText("Következő");
-
+					gameState = GameControlState.CAN_HAVE_NEXT;
+					gameControlBtn.setText(GameConstants.NEXT);
+					break;
+				case CAN_HAVE_NEXT:
+					getNewVerbs();
+					if (gameEnded) {
+						hintBtn.setVisible(false);
+						gameState = GameControlState.GAME_ENDED;
+						infoLabel.setText("Játék vége. Jegy: " + getGrade()
+								+ " (" + (score / (double) maxscore) * 100.0
+								+ "%)");
+						gameControlBtn.setText(GameConstants.RESTART);
+					} else {
+						gameState = GameControlState.NEED_CHECK;
+						gameControlBtn.setText(GameConstants.CHECK);
+					}
+					break;
+				case GAME_ENDED:
+					startNewGame();
+					hintBtn.setVisible(true);
+					gameControlBtn.setText(GameConstants.CHECK);
+					infoLabel.setText("");
+					break;
+				default:
+					break;
 				}
 			}
 		});
-		hintBtn = new JButton("Segítségkérés");
+		hintBtn = new JButton(GameConstants.HINT);
 		// TODO write listener for hintBtn
 
-		actionBtnsPanel.add(checkNextBtn);
+		actionBtnsPanel.add(gameControlBtn);
 		actionBtnsPanel.add(hintBtn);
 		actionBtnsPanel.setVisible(false);
 		bottomPanel.add(actionBtnsPanel, BorderLayout.CENTER);
@@ -222,56 +214,158 @@ public class VerbTesterWindow extends JFrame {
 		});
 	}
 
-	protected void getNewVerbs() {
-		for (int i = 0; i < currentVerbs.length; ++i) {
-			currentVerbs[i] = verbs.getNext();
+	protected void initGameComponents() {
+		// currentVerb = verbs.getNext();
+		topPanel.remove(startBtn);
+		// Felső panel és a benne lévő inputok
+		topPanel.setLayout(new BorderLayout(5, 5));
+		topPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+		inputs = new JTextField[5 * 10];
+		JPanel rightPanel = new JPanel(new GridLayout(11, 1, 5, 5));
+		checkAllCheckBox = new RootCheckBox();
+		rightPanel.add(checkAllCheckBox);
+		skippers = new SlaveCheckBox[10];
+		for (int j = 0; j < 10; ++j) {
+			skippers[j] = new SlaveCheckBox(checkAllCheckBox, j);
+			rightPanel.add(skippers[j]);
 		}
-		if (currentVerbs[0] == null) {
-			// TODO end game
-			System.out.println("Vége");
-			actionBtnsPanel.setVisible(false);
+		checkAllCheckBox.setSlaves(skippers);
+		checkAllCheckBox.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				if (checkAllCheckBox.isSelected()) {
+					gameState = GameControlState.CAN_HAVE_NEXT;
+					gameControlBtn.setText(GameConstants.NEXT);
+				} else {
+					gameState = GameControlState.NEED_CHECK;
+					gameControlBtn.setText(GameConstants.CHECK);
+				}
+			}
+		});
+		topPanel.add(rightPanel, BorderLayout.EAST);
+
+		JPanel inputsPanel = new JPanel(new GridLayout(11, 5, 5, 5));
+		// TODO ezeknek kell a normális oszlopnév!
+		String[] colNames = { "Infinitive", "Második", "Harmadik", "Negyedik",
+				"Magyar" };
+		for (String s : colNames) {
+			inputsPanel.add(new JLabel(s, SwingConstants.CENTER));
+		}
+		for (int i = 0; i < 5 * 10; ++i) {
+			inputs[i] = new JTextField();
+			inputs[i].setHorizontalAlignment(SwingConstants.CENTER);
+			inputs[i].setFocusable(true);
+			inputs[i].setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 12));
+			inputs[i].addFocusListener(new FocusListener() {
+
+				@Override
+				public void focusLost(FocusEvent arg0) {
+					JTextComponent t = ((JTextComponent) arg0.getComponent());
+					if (t != null) {
+						t.setSelectionEnd(0);
+					}
+				}
+
+				@Override
+				public void focusGained(FocusEvent arg0) {
+					JTextComponent t = ((JTextComponent) arg0.getComponent());
+					if (t.getCaret() != null) {
+						t.getCaret().setVisible(true);
+					}
+					t.setHighlighter(new DefaultHighlighter());
+					t.setSelectionStart(0);
+					t.setSelectionEnd(t.getText().length());
+				}
+			});
+			inputsPanel.add(inputs[i]);
+			// topPanel.add(Box.createRigidArea(new Dimension(0,5)));
+		}
+		topPanel.add(inputsPanel, BorderLayout.CENTER);
+		gameLabel.setText("");
+		actionBtnsPanel.setVisible(true);
+	}
+
+	protected void getNewVerbs() {
+		curVerbNum = 0;
+		for (int i = 0; i < currentVerbs.length; ++i) {
+			Verb v = verbs.getNext();
+			if (v == null) {
+				break;
+			} else {
+				++curVerbNum;
+				currentVerbs[i] = v;
+			}
+		}
+		if (curVerbNum == 0) {
+			gameEnded = true;
 		} else {
 			for (JTextField f : inputs) {
+				f.setVisible(true);
 				f.setEditable(true);
 				f.setEnabled(true);
 				f.setText("");
-				f.setForeground(UIManager.getColor("TextField.Foreground"));
+				f.setForeground(UIManager.getColor("TextField.foreground"));
+			}
+			for (SlaveCheckBox s : skippers) {
+				s.setVisible(true);
+				s.setEnabled(true);
+				s.setSelected(false);
 			}
 			Random randgen = new Random(new Date().getTime());
-			for (int i = 0; i < 5; ++i) {
+			for (int i = 0; i < 10; ++i) {
+				// If there are no more verbs, we disable their input fields
+				if (i >= curVerbNum) {
+					skippers[i].setVisible(false);
+					for (int j = 0; j < 5; ++j) {
+						inputs[i * 5 + j].setVisible(false);
+					}
+					continue;
+				}
 				int shown = randgen.nextInt(5);
-				inputs[i * 5 + shown].setEditable(false);
-				inputs[i * 5 + shown].setForeground(Color.ORANGE);
-				// inputs[shown].setEnabled(false);
+				shownFields[i] = shown;
+				inputs[i * 5 + shown].setEnabled(false);
+				inputs[i * 5 + shown].setDisabledTextColor(UIManager
+						.getColor("TextField.foreground"));
 				inputs[i * 5 + shown].setText(currentVerbs[i].alak(shown));
 			}
 		}
+		currentGuessesChecked = false;
 	}
 
 	protected void checkGuesses() {
-		int curscore = 0;
-		for (int i = 0; i < 5; ++i) {
+		int curScore = 0;
+		for (int i = 0; i < curVerbNum; ++i) {
+			if (skippers[i].isSelected()) {
+				currentVerbs[i].setSkipped(true);
+				verbs.add(currentVerbs[i]);
+				continue;
+			}
 			Verb v = new Verb();
 			for (int j = 0; j < 5; ++j) {
 				v.setAlak(j, inputs[i * 5 + j].getText());
 			}
-			if (skippers[i].isSelected()) {
-				v.setSkipped(true);
-				verbs.add(v);
-				continue;
-			}
-			maxscore += 4;
+			maxscore += 1;
 			if (verbs.contains(v)) {
-				curscore += 4;
+				curScore += 1;
 			} else {
 				// Ami meg volt adva azt nem számoljuk.
-				curscore += verbs.verbMatchScore(v) - 1;
+				// TODO Ha itt a segítségként megadottak stimmelnek, akkor
+				// annyit
+				// le kéne vonni.
+				// Ez lehet 0 is, de 3 is.
+				List<String> shown = new ArrayList<String>();
+				shown.add(v.alak(shownFields[i]));
+				if( verbs.verbMatchScore(v, shown) == 4) {
+					curScore += 1;
+				}
 			}
 		}
-		score += curscore;
+		score += curScore;
 		infoLabel.setText("Pontszám: " + score + "/" + maxscore + " ("
 				+ String.format("%.2f", (score / (double) maxscore) * 100.0)
 				+ "%)");
+		currentGuessesChecked = false;
 	}
 
 	protected void resizeFontsToFit() {
@@ -291,16 +385,30 @@ public class VerbTesterWindow extends JFrame {
 		// }
 	}
 
+	private int getGrade() {
+		int grade = 0;
+		double percent = (score / (double) maxscore) * 100.0;
+		for (GradeLimits g : GradeLimits.values()) {
+			if (percent >= g.getValue()) {
+				++grade;
+			} else if (grade == 0 && percent < g.getValue()) {
+				break;
+			}
+		}
+		return grade;
+	}
+
 	protected void startNewGame() {
 		verbs = new VerbTester();
 		score = 0;
 		maxscore = 0;
+		gameEnded = false;
 		getNewVerbs();
+		gameState = GameControlState.NEED_CHECK;
 	}
 
 	public VerbTesterWindow() {
 		super("Német rendhagyóige-kikérdező");
-		currentVerbs = new Verb[5];
 		initComponents();
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		pack();
@@ -310,8 +418,7 @@ public class VerbTesterWindow extends JFrame {
 
 	public static void main(String[] args) {
 		try {
-			UIManager
-					.setLookAndFeel("com.sun.java.swing.plaf.gtk.GTKLookAndFeel");
+			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 		} catch (ClassNotFoundException | InstantiationException
 				| IllegalAccessException | UnsupportedLookAndFeelException e) {
 			e.printStackTrace();
