@@ -27,6 +27,8 @@ import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.text.DefaultHighlighter;
 import javax.swing.text.JTextComponent;
 
@@ -230,10 +232,10 @@ public class VerbTesterWindow extends JFrame {
 			rightPanel.add(skippers[j]);
 		}
 		checkAllCheckBox.setSlaves(skippers);
-		checkAllCheckBox.addActionListener(new ActionListener() {
-
+		checkAllCheckBox.addChangeListener(new ChangeListener() {
+			
 			@Override
-			public void actionPerformed(ActionEvent arg0) {
+			public void stateChanged(ChangeEvent arg0) {
 				if (checkAllCheckBox.isSelected()) {
 					gameState = GameControlState.CAN_HAVE_NEXT;
 					gameControlBtn.setText(GameConstants.NEXT);
@@ -287,6 +289,14 @@ public class VerbTesterWindow extends JFrame {
 	}
 
 	protected void getNewVerbs() {
+		/* Skipped verbs go to the end */
+		for(int i = 0;i<skippers.length;++i) {
+			if (skippers[i].isSelected()) {
+				currentVerbs[i].setSkipped(true);
+				verbs.add(currentVerbs[i]);
+				continue;
+			}
+		}
 		curVerbNum = 0;
 		for (int i = 0; i < currentVerbs.length; ++i) {
 			Verb v = verbs.getNext();
@@ -336,11 +346,6 @@ public class VerbTesterWindow extends JFrame {
 	protected void checkGuesses() {
 		int curScore = 0;
 		for (int i = 0; i < curVerbNum; ++i) {
-			if (skippers[i].isSelected()) {
-				currentVerbs[i].setSkipped(true);
-				verbs.add(currentVerbs[i]);
-				continue;
-			}
 			Verb v = new Verb();
 			for (int j = 0; j < 5; ++j) {
 				v.setAlak(j, inputs[i * 5 + j].getText());
