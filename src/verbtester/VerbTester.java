@@ -18,6 +18,9 @@ public class VerbTester {
 	private ArrayList<Verb> verbs = new ArrayList<Verb>();
 	private String verbsFileCanonicalPath;
 	private int curIndex;
+	
+	private int firstVerbIndex;
+	private int verbNum;
 
 	public VerbTester() {
 		try {
@@ -27,6 +30,8 @@ public class VerbTester {
 		}
 		readVerbsIn();
 		curIndex = 0;
+		firstVerbIndex = 0;
+		verbNum = verbs.size();
 	}
 
 	public VerbTester(String verbsFileName) {
@@ -37,11 +42,54 @@ public class VerbTester {
 		}
 		readVerbsIn();
 		curIndex = 0;
+		firstVerbIndex = 0;
+		verbNum = verbs.size();
+	}
+	
+	public VerbTester(String verbsFileName, int firstVerbIndex, int verbNum) {
+		try {
+			verbsFileCanonicalPath = new File(verbsFileName).getCanonicalPath();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		readVerbsIn();
+		curIndex = firstVerbIndex;
+		this.firstVerbIndex = firstVerbIndex;
+		this.verbNum = verbNum;
+	}
+	
+	public VerbTester(int firstVerbIndex, int verbNum) {
+		try {
+			verbsFileCanonicalPath = new File("verbs.csv").getCanonicalPath();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		readVerbsIn();
+		// TODO check for index boundaries and overflow
+		curIndex = firstVerbIndex;
+		this.firstVerbIndex = firstVerbIndex;
+		this.verbNum = verbNum;
+	}
+	
+	public int getFirstVerbIndex() {
+		return firstVerbIndex;
+	}
+
+	public void setFirstVerbIndex(int firstVerbIndex) {
+		this.firstVerbIndex = firstVerbIndex;
+	}
+
+	public int getVerbNum() {
+		return verbNum;
+	}
+
+	public void setVerbNum(int verbNum) {
+		this.verbNum = verbNum;
 	}
 
 	public Verb getNext() {
 		Verb ret = null;
-		if (curIndex < /* 10 */verbs.size() && curIndex >= 0) {
+		if (curIndex < firstVerbIndex+verbNum && curIndex >= firstVerbIndex) {
 			ret = verbs.get(curIndex);
 			++curIndex;
 		}
@@ -75,6 +123,11 @@ public class VerbTester {
 
 	public boolean contains(Verb v) {
 		return verbs.contains(v);
+	}
+	
+	public void setVerbsFile(String s) throws IOException {
+		verbsFileCanonicalPath = new File(s).getCanonicalPath();
+		readVerbsIn();
 	}
 
 	public int verbMatchScore(Verb v, List<String> hints) {

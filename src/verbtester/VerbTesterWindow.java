@@ -11,6 +11,7 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -21,8 +22,12 @@ import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
+import javax.swing.KeyStroke;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
@@ -60,17 +65,15 @@ public class VerbTesterWindow extends JFrame {
 
 	private JLabel gameLabel;
 	private JPanel topPanel;
+	private JPanel rightPanel;
+	private JPanel inputsPanel;
 	// topPanelben 5*4 input, tömbbe rakjuk
 	private JTextField[] inputs;
-	// Ha nem aktív a játék, akkor pedig egy nagy "Start" gomb van
-	private JButton startBtn;
 
 	private RootCheckBox checkAllCheckBox;
 	private SlaveCheckBox[] skippers;
 	// topPanel vége
 
-	// topPanel alatt
-	private JLabel eredmenyLabel;
 
 	// legalul
 	private JPanel bottomPanel;
@@ -81,6 +84,14 @@ public class VerbTesterWindow extends JFrame {
 	private JButton hintBtn;
 	// bottomPanelben középen kitöltve
 	private JLabel infoLabel;
+
+	// Menük
+	private JMenuBar menuBar;
+	private JMenu fileMenu;
+	private JMenu gameMenu;
+	private JMenuItem openMenuItem;
+	private JMenuItem quitMenuItem;
+	private JMenuItem newGameMenuItem;
 
 	protected boolean currentGuessesChecked = false;
 	protected boolean gameEnded = false;
@@ -106,33 +117,6 @@ public class VerbTesterWindow extends JFrame {
 
 	private void initComponents() {
 		setLayout(new BorderLayout());
-		// Legfelső panel
-		gameLabel = new JLabel("Klikk a Start gombra :)");
-		gameLabel.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 40));
-		gameLabel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-		gameLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-		gameLabel.setAlignmentY(Component.CENTER_ALIGNMENT);
-		topPanel = new JPanel();
-		startBtn = new JButton(GameConstants.START);
-		startBtn.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				initGameComponents();
-				startNewGame();
-			}
-		});
-		topPanel.add(startBtn);
-		JPanel vmi = new JPanel(new BorderLayout());
-		JPanel topp = new JPanel();
-		topp.setLayout(new BoxLayout(topp, BoxLayout.PAGE_AXIS));
-		topp.add(gameLabel);
-		topp.add(topPanel);
-		vmi.add(topp, BorderLayout.NORTH);
-
-		// Középre nagyban az ellenőrzés eredménye
-		eredmenyLabel = new JLabel();
-		vmi.add(eredmenyLabel, BorderLayout.CENTER);
 
 		// Alulra az ellenőriz/segítségkérés/következő gombok balra,
 		// az infók középre, a súgógomb jobbra
@@ -180,74 +164,34 @@ public class VerbTesterWindow extends JFrame {
 
 		actionBtnsPanel.add(gameControlBtn);
 		actionBtnsPanel.add(hintBtn);
-		actionBtnsPanel.setVisible(false);
 		bottomPanel.add(actionBtnsPanel, BorderLayout.CENTER);
 		infoLabel = new JLabel("", SwingConstants.CENTER);
 		infoLabel.setHorizontalTextPosition(JLabel.CENTER);
 		infoLabel.setVerticalTextPosition(JLabel.CENTER);
 		infoLabel.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 14));
 		bottomPanel.add(infoLabel, BorderLayout.NORTH);
-		// helpBtn = new JButton("Súgó");
-		// JPanel p = new JPanel();
-		// p.add(helpBtn);
-		// bottomPanel.add(p,BorderLayout.EAST);
-		vmi.add(bottomPanel, BorderLayout.SOUTH);
-		add(vmi, BorderLayout.CENTER);
 
-		addComponentListener(new ComponentListener() {
-
-			@Override
-			public void componentShown(ComponentEvent arg0) {
-				resizeFontsToFit();
-			}
-
-			@Override
-			public void componentResized(ComponentEvent arg0) {
-				resizeFontsToFit();
-			}
-
-			@Override
-			public void componentMoved(ComponentEvent arg0) {
-			}
-
-			@Override
-			public void componentHidden(ComponentEvent arg0) {
-			}
-		});
-	}
-
-	protected void initGameComponents() {
-		// currentVerb = verbs.getNext();
-		topPanel.remove(startBtn);
-		// Felső panel és a benne lévő inputok
+		initMenus();
+		
+		topPanel = new JPanel();
 		topPanel.setLayout(new BorderLayout(5, 5));
 		topPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 		inputs = new JTextField[5 * 10];
-		JPanel rightPanel = new JPanel(new GridLayout(11, 1, 5, 5));
-		checkAllCheckBox = new RootCheckBox();
-		rightPanel.add(checkAllCheckBox);
-		skippers = new SlaveCheckBox[10];
-		for (int j = 0; j < 10; ++j) {
-			skippers[j] = new SlaveCheckBox(checkAllCheckBox, j);
-			rightPanel.add(skippers[j]);
-		}
-		checkAllCheckBox.setSlaves(skippers);
-		checkAllCheckBox.addChangeListener(new ChangeListener() {
-			
-			@Override
-			public void stateChanged(ChangeEvent arg0) {
-				if (checkAllCheckBox.isSelected()) {
-					gameState = GameControlState.CAN_HAVE_NEXT;
-					gameControlBtn.setText(GameConstants.NEXT);
-				} else {
-					gameState = GameControlState.NEED_CHECK;
-					gameControlBtn.setText(GameConstants.CHECK);
-				}
-			}
-		});
-		topPanel.add(rightPanel, BorderLayout.EAST);
+		rightPanel = new JPanel(new GridLayout(11, 1, 5, 5));
 
-		JPanel inputsPanel = new JPanel(new GridLayout(11, 5, 5, 5));
+		initCheckBoxes();
+
+		inputsPanel = new JPanel(new GridLayout(11, 5, 5, 5));
+
+		initInputs();
+
+		topPanel.add(inputsPanel, BorderLayout.CENTER);
+		add(topPanel,BorderLayout.CENTER);
+		add(bottomPanel,BorderLayout.SOUTH);
+		
+	}
+
+	private void initInputs() {
 		// TODO ezeknek kell a normális oszlopnév!
 		String[] colNames = { "Infinitive", "Második", "Harmadik", "Negyedik",
 				"Magyar" };
@@ -281,16 +225,94 @@ public class VerbTesterWindow extends JFrame {
 				}
 			});
 			inputsPanel.add(inputs[i]);
-			// topPanel.add(Box.createRigidArea(new Dimension(0,5)));
 		}
-		topPanel.add(inputsPanel, BorderLayout.CENTER);
-		gameLabel.setText("");
-		actionBtnsPanel.setVisible(true);
+	}
+
+	private void initCheckBoxes() {
+		checkAllCheckBox = new RootCheckBox("Kihagyás");
+		checkAllCheckBox.setHorizontalTextPosition(SwingConstants.RIGHT);
+		rightPanel.add(checkAllCheckBox);
+		skippers = new SlaveCheckBox[10];
+		for (int j = 0; j < 10; ++j) {
+			skippers[j] = new SlaveCheckBox(checkAllCheckBox, j);
+			// skippers[j].setText("Kihagyás");
+			rightPanel.add(skippers[j]);
+		}
+		checkAllCheckBox.setSlaves(skippers);
+		checkAllCheckBox.addChangeListener(new ChangeListener() {
+
+			@Override
+			public void stateChanged(ChangeEvent arg0) {
+				if (checkAllCheckBox.isSelected()) {
+					gameState = GameControlState.CAN_HAVE_NEXT;
+					gameControlBtn.setText(GameConstants.NEXT);
+				} else {
+					gameState = GameControlState.NEED_CHECK;
+					gameControlBtn.setText(GameConstants.CHECK);
+				}
+			}
+		});
+		topPanel.add(rightPanel, BorderLayout.EAST);
+	}
+
+	private void initMenus() {
+		menuBar = new JMenuBar();
+
+		fileMenu = new JMenu("Fájl");
+		fileMenu.setMnemonic(KeyEvent.VK_F);
+		menuBar.add(fileMenu);
+		openMenuItem = new JMenuItem("Megnyitás...");
+		openMenuItem.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				openFileChooser();
+			}
+		});
+		openMenuItem.setToolTipText("Igéket tartalmazó fájl megnyitása");
+		openMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O,ActionEvent.CTRL_MASK));
+
+		fileMenu.add(openMenuItem);
+		fileMenu.addSeparator();
+		
+		quitMenuItem = new JMenuItem("Kilépés");
+		quitMenuItem.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				System.exit(0);
+			}
+		});
+		quitMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q,ActionEvent.CTRL_MASK));
+
+		fileMenu.add(quitMenuItem);
+
+		gameMenu = new JMenu("Játék");
+		gameMenu.setMnemonic(KeyEvent.VK_J);
+		menuBar.add(gameMenu);
+		
+		newGameMenuItem = new JMenuItem("Újrakezdés");
+		newGameMenuItem.addActionListener(new ActionListener() {
+			
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				startNewGame();
+			}
+		});
+		newGameMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N,ActionEvent.CTRL_MASK));
+		
+		gameMenu.add(newGameMenuItem);
+
+		getRootPane().setJMenuBar(menuBar);
+	}
+
+	protected void openFileChooser() {
+		System.out.println("openFileChooser");
 	}
 
 	protected void getNewVerbs() {
 		/* Skipped verbs go to the end */
-		for(int i = 0;i<skippers.length;++i) {
+		for (int i = 0; i < skippers.length; ++i) {
 			if (skippers[i].isSelected()) {
 				currentVerbs[i].setSkipped(true);
 				verbs.add(currentVerbs[i]);
@@ -361,7 +383,7 @@ public class VerbTesterWindow extends JFrame {
 				// Ez lehet 0 is, de 3 is.
 				List<String> shown = new ArrayList<String>();
 				shown.add(v.alak(shownFields[i]));
-				if( verbs.verbMatchScore(v, shown) == 4) {
+				if (verbs.verbMatchScore(v, shown) == 4) {
 					curScore += 1;
 				}
 			}
@@ -374,20 +396,20 @@ public class VerbTesterWindow extends JFrame {
 	}
 
 	protected void resizeFontsToFit() {
-		// int h = getSize().height;
-		// if (gameLabel != null) {
-		// Font glFont = gameLabel.getFont();
-		// gameLabel.setFont(new Font(glFont.getName(), glFont.getStyle(),
-		// h / 10));
-		// }
-		// if (inputs == null)
-		// return;
-		// for (JTextField f : inputs) {
-		// if (f != null) {
-		// Font ff = f.getFont();
-		// f.setFont(new Font(ff.getName(), ff.getStyle(), h / 20));
-		// }
-		// }
+		int h = getSize().height;
+		if (gameLabel != null) {
+			Font glFont = gameLabel.getFont();
+			gameLabel.setFont(new Font(glFont.getName(), glFont.getStyle(),
+					h / 10));
+		}
+		if (inputs == null)
+			return;
+		for (JTextField f : inputs) {
+			if (f != null) {
+				Font ff = f.getFont();
+				f.setFont(new Font(ff.getName(), ff.getStyle(), h / 40));
+			}
+		}
 	}
 
 	private int getGrade() {
@@ -404,7 +426,7 @@ public class VerbTesterWindow extends JFrame {
 	}
 
 	protected void startNewGame() {
-		verbs = new VerbTester();
+		verbs = new VerbTester(10, 10);
 		score = 0;
 		maxscore = 0;
 		gameEnded = false;
@@ -418,7 +440,8 @@ public class VerbTesterWindow extends JFrame {
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		pack();
 		setSize(new Dimension(640, 480));
-		setMinimumSize(new Dimension(500, 270));
+		setMinimumSize(new Dimension(640, 480));
+		startNewGame();
 	}
 
 	public static void main(String[] args) {
