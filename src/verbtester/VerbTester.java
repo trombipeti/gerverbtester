@@ -20,7 +20,7 @@ public class VerbTester {
 	private int curIndex;
 	
 	private int firstVerbIndex;
-	private int verbNum;
+	private int numVerbsToAsk;
 
 	public VerbTester() {
 		try {
@@ -31,7 +31,7 @@ public class VerbTester {
 		readVerbsIn();
 		curIndex = 0;
 		firstVerbIndex = 0;
-		verbNum = verbs.size();
+		numVerbsToAsk = verbs.size() - 1;
 	}
 
 	public VerbTester(String verbsFileName) {
@@ -43,22 +43,22 @@ public class VerbTester {
 		readVerbsIn();
 		curIndex = 0;
 		firstVerbIndex = 0;
-		verbNum = verbs.size();
+		numVerbsToAsk = verbs.size() - 1;
 	}
 	
-	public VerbTester(String verbsFileName, int firstVerbIndex, int verbNum) {
+	public VerbTester(String verbsFileName, int _firstVerbIndex, int _lastVerbToAskIndex) {
 		try {
 			verbsFileCanonicalPath = new File(verbsFileName).getCanonicalPath();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 		readVerbsIn();
-		curIndex = firstVerbIndex;
-		this.firstVerbIndex = firstVerbIndex;
-		this.verbNum = verbNum;
+		curIndex = _firstVerbIndex;
+		this.firstVerbIndex = _firstVerbIndex;
+		this.numVerbsToAsk = _lastVerbToAskIndex;
 	}
 	
-	public VerbTester(int firstVerbIndex, int verbNum) {
+	public VerbTester(int _firstVerbIndex, int _lastVerbToAskIndex) {
 		try {
 			verbsFileCanonicalPath = new File("verbs.csv").getCanonicalPath();
 		} catch (IOException e) {
@@ -66,9 +66,9 @@ public class VerbTester {
 		}
 		readVerbsIn();
 		// TODO check for index boundaries and overflow
-		curIndex = firstVerbIndex;
-		this.firstVerbIndex = firstVerbIndex;
-		this.verbNum = verbNum;
+		curIndex = _firstVerbIndex;
+		this.firstVerbIndex = _firstVerbIndex;
+		this.numVerbsToAsk = _lastVerbToAskIndex;
 	}
 	
 	public int getFirstVerbIndex() {
@@ -79,17 +79,26 @@ public class VerbTester {
 		this.firstVerbIndex = firstVerbIndex;
 	}
 
+	public int getNumVerbsToAsk() {
+		return numVerbsToAsk;
+	}
+
+	public void setNumVerbsToAsk(int n) {
+		this.numVerbsToAsk = n;
+		System.out.println(numVerbsToAsk);
+	}
+	
+	public String getVerbsFileName() {
+		return verbsFileCanonicalPath;
+	}
+	
 	public int getVerbNum() {
-		return verbNum;
+		return verbs.size();
 	}
-
-	public void setVerbNum(int verbNum) {
-		this.verbNum = verbNum;
-	}
-
+	
 	public Verb getNext() {
 		Verb ret = null;
-		if (curIndex < firstVerbIndex+verbNum && curIndex >= firstVerbIndex) {
+		if (curIndex < firstVerbIndex+numVerbsToAsk && curIndex >= firstVerbIndex) {
 			ret = verbs.get(curIndex);
 			++curIndex;
 		}
@@ -129,7 +138,11 @@ public class VerbTester {
 		verbsFileCanonicalPath = new File(s).getCanonicalPath();
 		readVerbsIn();
 	}
-
+	
+	public void reset() {
+		curIndex = firstVerbIndex;
+	}
+	
 	public int verbMatchScore(Verb v, List<String> hints) {
 		int ret = 0;
 		if (contains(v)) {

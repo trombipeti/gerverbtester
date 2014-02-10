@@ -1,14 +1,11 @@
 package verbtester;
 
 import java.awt.BorderLayout;
-import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.ComponentEvent;
-import java.awt.event.ComponentListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
@@ -18,7 +15,6 @@ import java.util.List;
 import java.util.Random;
 
 import javax.swing.BorderFactory;
-import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -56,14 +52,13 @@ public class VerbTesterWindow extends JFrame {
 
 	private static final long serialVersionUID = 2240584624816230669L;
 
-	private VerbTester verbs;
+	private VerbTester verbTester = null;
 	private Verb[] currentVerbs = new Verb[10];
 	private int[] shownFields = new int[10];
 
 	private int score;
 	private int maxscore = 0;
 
-	private JLabel gameLabel;
 	private JPanel topPanel;
 	private JPanel rightPanel;
 	private JPanel inputsPanel;
@@ -73,7 +68,6 @@ public class VerbTesterWindow extends JFrame {
 	private RootCheckBox checkAllCheckBox;
 	private SlaveCheckBox[] skippers;
 	// topPanel vége
-
 
 	// legalul
 	private JPanel bottomPanel;
@@ -92,6 +86,7 @@ public class VerbTesterWindow extends JFrame {
 	private JMenuItem openMenuItem;
 	private JMenuItem quitMenuItem;
 	private JMenuItem newGameMenuItem;
+	private JMenuItem verbLimitsMenuItem;
 
 	protected boolean currentGuessesChecked = false;
 	protected boolean gameEnded = false;
@@ -139,7 +134,7 @@ public class VerbTesterWindow extends JFrame {
 					if (gameEnded) {
 						hintBtn.setVisible(false);
 						gameState = GameControlState.GAME_ENDED;
-						infoLabel.setText("Játék vége. Jegy: " + getGrade()
+						infoLabel.setText("Teszt vége. Jegy: " + getGrade()
 								+ " (" + (score / (double) maxscore) * 100.0
 								+ "%)");
 						gameControlBtn.setText(GameConstants.RESTART);
@@ -172,23 +167,23 @@ public class VerbTesterWindow extends JFrame {
 		bottomPanel.add(infoLabel, BorderLayout.NORTH);
 
 		initMenus();
-		
+
 		topPanel = new JPanel();
 		topPanel.setLayout(new BorderLayout(5, 5));
 		topPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 		inputs = new JTextField[5 * 10];
 		rightPanel = new JPanel(new GridLayout(11, 1, 5, 5));
 
-		initCheckBoxes();
+//		initCheckBoxes();
 
 		inputsPanel = new JPanel(new GridLayout(11, 5, 5, 5));
 
 		initInputs();
 
 		topPanel.add(inputsPanel, BorderLayout.CENTER);
-		add(topPanel,BorderLayout.CENTER);
-		add(bottomPanel,BorderLayout.SOUTH);
-		
+		add(topPanel, BorderLayout.CENTER);
+		add(bottomPanel, BorderLayout.SOUTH);
+
 	}
 
 	private void initInputs() {
@@ -270,11 +265,12 @@ public class VerbTesterWindow extends JFrame {
 			}
 		});
 		openMenuItem.setToolTipText("Igéket tartalmazó fájl megnyitása");
-		openMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O,ActionEvent.CTRL_MASK));
+		openMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O,
+				ActionEvent.CTRL_MASK));
 
 		fileMenu.add(openMenuItem);
 		fileMenu.addSeparator();
-		
+
 		quitMenuItem = new JMenuItem("Kilépés");
 		quitMenuItem.addActionListener(new ActionListener() {
 
@@ -283,27 +279,50 @@ public class VerbTesterWindow extends JFrame {
 				System.exit(0);
 			}
 		});
-		quitMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q,ActionEvent.CTRL_MASK));
+		quitMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q,
+				ActionEvent.CTRL_MASK));
 
 		fileMenu.add(quitMenuItem);
 
 		gameMenu = new JMenu("Játék");
 		gameMenu.setMnemonic(KeyEvent.VK_J);
 		menuBar.add(gameMenu);
-		
+
 		newGameMenuItem = new JMenuItem("Újrakezdés");
 		newGameMenuItem.addActionListener(new ActionListener() {
-			
+
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				startNewGame();
 			}
 		});
-		newGameMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N,ActionEvent.CTRL_MASK));
-		
+		newGameMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N,
+				ActionEvent.CTRL_MASK));
+
 		gameMenu.add(newGameMenuItem);
 
+		verbLimitsMenuItem = new JMenuItem("Kérdezendő igék megadása");
+		verbLimitsMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_I,
+				ActionEvent.CTRL_MASK));
+		verbLimitsMenuItem
+				.setToolTipText("Itt tudod megadni, hogy melyik igéket kérdezze ki");
+		verbLimitsMenuItem.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				setVerbLimits();
+			}
+		});
+
+		gameMenu.add(verbLimitsMenuItem);
+
 		getRootPane().setJMenuBar(menuBar);
+	}
+
+	protected void setVerbLimits() {
+		VerbLimitsPrefWindow prefWin = new VerbLimitsPrefWindow(this,
+				"Igék beállítása", true);
+		prefWin.showDialog();
 	}
 
 	protected void openFileChooser() {
@@ -311,17 +330,18 @@ public class VerbTesterWindow extends JFrame {
 	}
 
 	protected void getNewVerbs() {
-		/* Skipped verbs go to the end */
-		for (int i = 0; i < skippers.length; ++i) {
-			if (skippers[i].isSelected()) {
-				currentVerbs[i].setSkipped(true);
-				verbs.add(currentVerbs[i]);
-				continue;
-			}
-		}
+		// Currently no skip option!
+//		/* Skipped verbs go to the end */
+//		for (int i = 0; i < skippers.length; ++i) {
+//			if (skippers[i].isSelected()) {
+//				currentVerbs[i].setSkipped(true);
+//				getVerbTester().add(currentVerbs[i]);
+//				continue;
+//			}
+//		}
 		curVerbNum = 0;
 		for (int i = 0; i < currentVerbs.length; ++i) {
-			Verb v = verbs.getNext();
+			Verb v = getVerbTester().getNext();
 			if (v == null) {
 				break;
 			} else {
@@ -339,16 +359,18 @@ public class VerbTesterWindow extends JFrame {
 				f.setText("");
 				f.setForeground(UIManager.getColor("TextField.foreground"));
 			}
-			for (SlaveCheckBox s : skippers) {
-				s.setVisible(true);
-				s.setEnabled(true);
-				s.setSelected(false);
-			}
+			// No checkboxes for now
+//			for (SlaveCheckBox s : skippers) {
+//				s.setVisible(true);
+//				s.setEnabled(true);
+//				s.setSelected(false);
+//			}
 			Random randgen = new Random(new Date().getTime());
 			for (int i = 0; i < 10; ++i) {
 				// If there are no more verbs, we disable their input fields
 				if (i >= curVerbNum) {
-					skippers[i].setVisible(false);
+					// No checkboxes
+//					skippers[i].setVisible(false);
 					for (int j = 0; j < 5; ++j) {
 						inputs[i * 5 + j].setVisible(false);
 					}
@@ -373,7 +395,7 @@ public class VerbTesterWindow extends JFrame {
 				v.setAlak(j, inputs[i * 5 + j].getText());
 			}
 			maxscore += 1;
-			if (verbs.contains(v)) {
+			if (getVerbTester().contains(v)) {
 				curScore += 1;
 			} else {
 				// Ami meg volt adva azt nem számoljuk.
@@ -383,7 +405,7 @@ public class VerbTesterWindow extends JFrame {
 				// Ez lehet 0 is, de 3 is.
 				List<String> shown = new ArrayList<String>();
 				shown.add(v.alak(shownFields[i]));
-				if (verbs.verbMatchScore(v, shown) == 4) {
+				if (getVerbTester().verbMatchScore(v, shown) == 4) {
 					curScore += 1;
 				}
 			}
@@ -393,23 +415,6 @@ public class VerbTesterWindow extends JFrame {
 				+ String.format("%.2f", (score / (double) maxscore) * 100.0)
 				+ "%)");
 		currentGuessesChecked = false;
-	}
-
-	protected void resizeFontsToFit() {
-		int h = getSize().height;
-		if (gameLabel != null) {
-			Font glFont = gameLabel.getFont();
-			gameLabel.setFont(new Font(glFont.getName(), glFont.getStyle(),
-					h / 10));
-		}
-		if (inputs == null)
-			return;
-		for (JTextField f : inputs) {
-			if (f != null) {
-				Font ff = f.getFont();
-				f.setFont(new Font(ff.getName(), ff.getStyle(), h / 40));
-			}
-		}
 	}
 
 	private int getGrade() {
@@ -425,13 +430,25 @@ public class VerbTesterWindow extends JFrame {
 		return grade;
 	}
 
-	protected void startNewGame() {
-		verbs = new VerbTester(10, 10);
+	public void startNewGame() {
+		if (verbTester == null) {
+			setVerbTester(new VerbTester(0,10));
+		} else {
+			verbTester.reset();
+		}
 		score = 0;
 		maxscore = 0;
 		gameEnded = false;
 		getNewVerbs();
 		gameState = GameControlState.NEED_CHECK;
+	}
+
+	public VerbTester getVerbTester() {
+		return verbTester;
+	}
+
+	public void setVerbTester(VerbTester verbTester) {
+		this.verbTester = verbTester;
 	}
 
 	public VerbTesterWindow() {
@@ -459,5 +476,25 @@ public class VerbTesterWindow extends JFrame {
 				win.setVisible(true);
 			}
 		});
+	}
+
+	public int getFirstVerbIndex() {
+		return verbTester.getFirstVerbIndex();
+	}
+
+	public int getVerbNum() {
+		return verbTester.getVerbNum();
+	}
+
+	public int getNumVerbsToAsk() {
+		return verbTester.getNumVerbsToAsk();
+	}
+
+	public void setFirstVerbIndex(int i) {
+		verbTester.setFirstVerbIndex(i);
+	}
+
+	public void setNumVerbsToAsk(int i) {
+		verbTester.setNumVerbsToAsk(i);
 	}
 }
