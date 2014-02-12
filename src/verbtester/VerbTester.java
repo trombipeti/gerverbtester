@@ -104,6 +104,20 @@ public class VerbTester {
 		}
 		return ret;
 	}
+	
+	public Verb getRandom() {
+		Verb ret = null;
+		int it = 0;
+		int at = 0;
+		do {
+			at = (int) Math.round((Math.random() * (numVerbsToAsk - firstVerbIndex) + firstVerbIndex));
+			++it;
+		} while(verbs.get(at).isAsked() && it < numVerbsToAsk);
+		if(it < numVerbsToAsk) {
+			ret = verbs.get(at);
+		}
+		return ret;
+	}
 
 	public void skip(Verb v) {
 		verbs.remove(v);

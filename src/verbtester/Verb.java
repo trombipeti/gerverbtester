@@ -3,9 +3,11 @@ package verbtester;
 public class Verb {
 	private String[] alakok;
 	private boolean skipped;
+	private boolean asked;
 	
 	public Verb() {
 		skipped = false;
+		asked = false;
 		alakok = new String[5];
 	}
 	
@@ -18,6 +20,7 @@ public class Verb {
 			alakok[i] = a[i];
 		}
 		skipped = false;
+		asked = false;
 	}
 	
 	public String alak(int i) {
@@ -43,5 +46,14 @@ public class Verb {
 			ret += s+" ";
 		}
 		return ret;
+	}
+
+	public boolean isAsked() {
+		return asked;
+	}
+	
+
+	public void setAsked(boolean asked) {
+		this.asked = asked;
 	}
 }

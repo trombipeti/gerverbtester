@@ -134,8 +134,11 @@ public class VerbTesterWindow extends JFrame {
 					if (gameEnded) {
 						hintBtn.setVisible(false);
 						gameState = GameControlState.GAME_ENDED;
-						infoLabel.setText("Teszt vége. Jegy: " + getGrade()
-								+ " (" + (score / (double) maxscore) * 100.0
+						infoLabel.setText("Teszt vége. Jegy: "
+								+ getGrade()
+								+ " ("
+								+ String.format("%.2f",
+										(score / (double) maxscore) * 100.0)
 								+ "%)");
 						gameControlBtn.setText(GameConstants.RESTART);
 					} else {
@@ -174,7 +177,7 @@ public class VerbTesterWindow extends JFrame {
 		inputs = new JTextField[5 * 10];
 		rightPanel = new JPanel(new GridLayout(11, 1, 5, 5));
 
-//		initCheckBoxes();
+		// initCheckBoxes();
 
 		inputsPanel = new JPanel(new GridLayout(11, 5, 5, 5));
 
@@ -331,17 +334,17 @@ public class VerbTesterWindow extends JFrame {
 
 	protected void getNewVerbs() {
 		// Currently no skip option!
-//		/* Skipped verbs go to the end */
-//		for (int i = 0; i < skippers.length; ++i) {
-//			if (skippers[i].isSelected()) {
-//				currentVerbs[i].setSkipped(true);
-//				getVerbTester().add(currentVerbs[i]);
-//				continue;
-//			}
-//		}
+		// /* Skipped verbs go to the end */
+		// for (int i = 0; i < skippers.length; ++i) {
+		// if (skippers[i].isSelected()) {
+		// currentVerbs[i].setSkipped(true);
+		// getVerbTester().add(currentVerbs[i]);
+		// continue;
+		// }
+		// }
 		curVerbNum = 0;
 		for (int i = 0; i < currentVerbs.length; ++i) {
-			Verb v = getVerbTester().getNext();
+			Verb v = getVerbTester().getRandom();
 			if (v == null) {
 				break;
 			} else {
@@ -360,17 +363,17 @@ public class VerbTesterWindow extends JFrame {
 				f.setForeground(UIManager.getColor("TextField.foreground"));
 			}
 			// No checkboxes for now
-//			for (SlaveCheckBox s : skippers) {
-//				s.setVisible(true);
-//				s.setEnabled(true);
-//				s.setSelected(false);
-//			}
+			// for (SlaveCheckBox s : skippers) {
+			// s.setVisible(true);
+			// s.setEnabled(true);
+			// s.setSelected(false);
+			// }
 			Random randgen = new Random(new Date().getTime());
 			for (int i = 0; i < 10; ++i) {
 				// If there are no more verbs, we disable their input fields
 				if (i >= curVerbNum) {
 					// No checkboxes
-//					skippers[i].setVisible(false);
+					// skippers[i].setVisible(false);
 					for (int j = 0; j < 5; ++j) {
 						inputs[i * 5 + j].setVisible(false);
 					}
@@ -432,7 +435,7 @@ public class VerbTesterWindow extends JFrame {
 
 	public void startNewGame() {
 		if (verbTester == null) {
-			setVerbTester(new VerbTester(0,10));
+			setVerbTester(new VerbTester(0, 10));
 		} else {
 			verbTester.reset();
 		}
