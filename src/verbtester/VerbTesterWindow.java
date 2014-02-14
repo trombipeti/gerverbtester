@@ -212,8 +212,7 @@ public class VerbTesterWindow extends JFrame {
 	}
 
 	private void initInputs() {
-		// TODO ezeknek kell a normális oszlopnév!
-		String[] colNames = { "Infinitive", "Második", "Harmadik", "Negyedik",
+		String[] colNames = { "Infinitiv", "<html><p align='center'>Präsens<br/>E/3</p></html>", "Präteritum", "Perfekt",
 				"Magyar" };
 		for (String s : colNames) {
 			inputsPanel.add(new JLabel(s, SwingConstants.CENTER));
