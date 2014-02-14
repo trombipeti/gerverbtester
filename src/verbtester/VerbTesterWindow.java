@@ -9,6 +9,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -16,11 +17,13 @@ import java.util.Random;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.KeyStroke;
@@ -30,6 +33,7 @@ import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.text.DefaultHighlighter;
 import javax.swing.text.JTextComponent;
 
@@ -56,8 +60,11 @@ public class VerbTesterWindow extends JFrame {
 	private Verb[] currentVerbs = new Verb[10];
 	private int[] shownFields = new int[10];
 
-	private int score;
-	private int maxscore = 0;
+	private int curTestScore;
+	private int curTestMaxScore = 0;
+
+	private int gameScore = 0;
+	private int gameMaxScore = 0;
 
 	private JPanel topPanel;
 	private JPanel rightPanel;
@@ -91,6 +98,8 @@ public class VerbTesterWindow extends JFrame {
 	protected boolean currentGuessesChecked = false;
 	protected boolean gameEnded = false;
 
+	private ArrayList<Integer> grades;
+
 	private int curVerbNum = 0;
 
 	// bottomPanelben jobboldalt
@@ -101,6 +110,8 @@ public class VerbTesterWindow extends JFrame {
 	}
 
 	private GameControlState gameState = GameControlState.NEED_CHECK;
+
+	private String verbsFileName = "verbs.csv";
 
 	static class GameConstants {
 		public static String START = "Start";
@@ -126,24 +137,35 @@ public class VerbTesterWindow extends JFrame {
 				switch (gameState) {
 				case NEED_CHECK:
 					checkGuesses();
+					int curGrade = getGrade(curTestScore, curTestMaxScore);
+					grades.add(curGrade);
+					infoLabel.setText("Pontszám: " + curTestScore + "/"
+							+ curTestMaxScore + " Jegy: " + curGrade);
+					currentGuessesChecked = false;
 					gameState = GameControlState.CAN_HAVE_NEXT;
 					gameControlBtn.setText(GameConstants.NEXT);
 					break;
 				case CAN_HAVE_NEXT:
 					getNewVerbs();
+					curTestScore = 0;
+					curTestMaxScore = 0;
 					if (gameEnded) {
 						hintBtn.setVisible(false);
 						gameState = GameControlState.GAME_ENDED;
-						infoLabel.setText("Teszt vége. Jegy: "
-								+ getGrade()
+						infoLabel.setText("Teszt vége. Pontszám: "
+								+ gameScore
+								+ "/"
+								+ gameMaxScore
 								+ " ("
-								+ String.format("%.2f",
-										(score / (double) maxscore) * 100.0)
+								+ String.format(
+										"%.2f",
+										(gameScore / (double) gameMaxScore) * 100.0)
 								+ "%)");
 						gameControlBtn.setText(GameConstants.RESTART);
 					} else {
 						gameState = GameControlState.NEED_CHECK;
 						gameControlBtn.setText(GameConstants.CHECK);
+						infoLabel.setText("");
 					}
 					break;
 				case GAME_ENDED:
@@ -264,7 +286,9 @@ public class VerbTesterWindow extends JFrame {
 
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				openFileChooser();
+				if (openFileChooser() == JFileChooser.APPROVE_OPTION) {
+					startNewGame();
+				}
 			}
 		});
 		openMenuItem.setToolTipText("Igéket tartalmazó fájl megnyitása");
@@ -279,7 +303,12 @@ public class VerbTesterWindow extends JFrame {
 
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				System.exit(0);
+				int selected = JOptionPane.showConfirmDialog(getRootPane(),
+						"Tényleg abbahagyod a tanulást????", "NELUSTÁKOGGYÁ!!!!",
+						JOptionPane.YES_NO_OPTION);
+				if (selected == JOptionPane.YES_OPTION) {
+					System.exit(0);
+				}
 			}
 		});
 		quitMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q,
@@ -328,8 +357,20 @@ public class VerbTesterWindow extends JFrame {
 		prefWin.showDialog();
 	}
 
-	protected void openFileChooser() {
-		System.out.println("openFileChooser");
+	protected int openFileChooser() {
+		JFileChooser chooser = new JFileChooser();
+		FileNameExtensionFilter filter = new FileNameExtensionFilter(
+				"CSV kiterjesztésű fájlok", "csv");
+		chooser.setFileFilter(filter);
+		int retVal = chooser.showOpenDialog(this);
+		if (retVal == JFileChooser.APPROVE_OPTION) {
+			try {
+				verbsFileName = chooser.getSelectedFile().getCanonicalPath();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		return retVal;
 	}
 
 	protected void getNewVerbs() {
@@ -361,6 +402,7 @@ public class VerbTesterWindow extends JFrame {
 				f.setEnabled(true);
 				f.setText("");
 				f.setForeground(UIManager.getColor("TextField.foreground"));
+				f.setToolTipText(null);
 			}
 			// No checkboxes for now
 			// for (SlaveCheckBox s : skippers) {
@@ -397,7 +439,7 @@ public class VerbTesterWindow extends JFrame {
 			for (int j = 0; j < 5; ++j) {
 				v.setAlak(j, inputs[i * 5 + j].getText());
 			}
-			maxscore += 1;
+			curTestMaxScore += 1;
 			if (getVerbTester().contains(v)) {
 				curScore += 1;
 			} else {
@@ -413,16 +455,15 @@ public class VerbTesterWindow extends JFrame {
 				}
 			}
 		}
-		score += curScore;
-		infoLabel.setText("Pontszám: " + score + "/" + maxscore + " ("
-				+ String.format("%.2f", (score / (double) maxscore) * 100.0)
-				+ "%)");
-		currentGuessesChecked = false;
+		curTestScore += curScore;
+
+		gameScore += curScore;
+		gameMaxScore += curTestMaxScore;
 	}
 
-	private int getGrade() {
+	private int getGrade(int score, int maxScore) {
 		int grade = 0;
-		double percent = (score / (double) maxscore) * 100.0;
+		double percent = (curTestScore / (double) curTestMaxScore) * 100.0;
 		for (GradeLimits g : GradeLimits.values()) {
 			if (percent >= g.getValue()) {
 				++grade;
@@ -433,16 +474,30 @@ public class VerbTesterWindow extends JFrame {
 		return grade;
 	}
 
+	protected double getGradeAverage() {
+		double ret = 0.0;
+		int sum = 0;
+		for (Integer i : grades) {
+			sum += i;
+		}
+		ret = (double) sum / grades.size();
+		return ret;
+	}
+
 	public void startNewGame() {
 		if (verbTester == null) {
-			setVerbTester(new VerbTester(0, 10));
+			setVerbTester(new VerbTester(verbsFileName));
 		} else {
 			verbTester.reset();
 		}
-		score = 0;
-		maxscore = 0;
+		curTestScore = 0;
+		curTestMaxScore = 0;
+		gameScore = 0;
+		gameMaxScore = 0;
 		gameEnded = false;
+		infoLabel.setText("");
 		getNewVerbs();
+		grades = new ArrayList<Integer>();
 		gameState = GameControlState.NEED_CHECK;
 	}
 

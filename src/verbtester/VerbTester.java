@@ -6,9 +6,13 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Random;
+import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.TreeSet;
 
 import javax.swing.JDialog;
 import javax.swing.JOptionPane;
@@ -31,7 +35,7 @@ public class VerbTester {
 		readVerbsIn();
 		curIndex = 0;
 		firstVerbIndex = 0;
-		numVerbsToAsk = verbs.size() - 1;
+		numVerbsToAsk = verbs.size();
 	}
 
 	public VerbTester(String verbsFileName) {
@@ -43,7 +47,8 @@ public class VerbTester {
 		readVerbsIn();
 		curIndex = 0;
 		firstVerbIndex = 0;
-		numVerbsToAsk = verbs.size() - 1;
+		numVerbsToAsk = verbs.size();
+		System.out.println("nvta: "+numVerbsToAsk);
 	}
 	
 	public VerbTester(String verbsFileName, int _firstVerbIndex, int _lastVerbToAskIndex) {
@@ -77,6 +82,7 @@ public class VerbTester {
 
 	public void setFirstVerbIndex(int firstVerbIndex) {
 		this.firstVerbIndex = firstVerbIndex;
+		System.out.println(this.firstVerbIndex);
 	}
 
 	public int getNumVerbsToAsk() {
@@ -107,14 +113,23 @@ public class VerbTester {
 	
 	public Verb getRandom() {
 		Verb ret = null;
-		int it = 0;
 		int at = 0;
-		do {
-			at = (int) Math.round((Math.random() * (numVerbsToAsk - firstVerbIndex) + firstVerbIndex));
-			++it;
-		} while(verbs.get(at).isAsked() && it < numVerbsToAsk);
-		if(it < numVerbsToAsk) {
+		Set<Integer> tried = new TreeSet<Integer>();
+		Random randgen = new Random(System.currentTimeMillis());
+		while(true) {
+			at = randgen.nextInt(numVerbsToAsk) + firstVerbIndex;
 			ret = verbs.get(at);
+			if(ret.isAsked() == false) {
+				ret.setAsked(true);
+				verbs.set(at, ret);
+				break;
+			}
+			tried.add(new Integer(at));
+//			System.out.println(numVerbsToAsk+" - "+firstVerbIndex + " : " + at);
+			if(tried.size() >= numVerbsToAsk) {
+				ret = null;
+				break;
+			}
 		}
 		return ret;
 	}
@@ -155,6 +170,11 @@ public class VerbTester {
 	
 	public void reset() {
 		curIndex = firstVerbIndex;
+		for(int i = 0;i<verbs.size();++i) {
+			Verb v = verbs.get(i);
+			v.setAsked(false);
+			verbs.set(i, v);
+		}
 	}
 	
 	public int verbMatchScore(Verb v, List<String> hints) {
