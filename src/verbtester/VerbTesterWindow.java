@@ -303,7 +303,9 @@ public class VerbTesterWindow extends JFrame {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				int selected = JOptionPane.showConfirmDialog(getRootPane(),
-						"Tényleg abbahagyod a tanulást????", "NELUSTÁKOGGYÁ!!!!",
+						// Tündinek
+						//"Tényleg abbahagyod a tanulást????", "NELUSTÁKOGGYÁ!!!!",
+						"Tényleg ki szeretnél lépni?","Kilépés",
 						JOptionPane.YES_NO_OPTION);
 				if (selected == JOptionPane.YES_OPTION) {
 					System.exit(0);
