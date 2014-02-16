@@ -1,6 +1,7 @@
 package verbtester;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridLayout;
@@ -212,8 +213,9 @@ public class VerbTesterWindow extends JFrame {
 	}
 
 	private void initInputs() {
-		String[] colNames = { "Infinitiv", "<html><p align='center'>Präsens<br/>E/3</p></html>", "Präteritum", "Perfekt",
-				"Magyar" };
+		String[] colNames = { "Infinitiv",
+				"<html><p align='center'>Präsens<br/>E/3</p></html>",
+				"Präteritum", "Perfekt", "Magyar" };
 		for (String s : colNames) {
 			inputsPanel.add(new JLabel(s, SwingConstants.CENTER));
 		}
@@ -247,6 +249,7 @@ public class VerbTesterWindow extends JFrame {
 		}
 	}
 
+	@SuppressWarnings("unused")
 	private void initCheckBoxes() {
 		checkAllCheckBox = new RootCheckBox("Kihagyás");
 		checkAllCheckBox.setHorizontalTextPosition(SwingConstants.RIGHT);
@@ -302,10 +305,12 @@ public class VerbTesterWindow extends JFrame {
 
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				int selected = JOptionPane.showConfirmDialog(getRootPane(),
+				int selected = JOptionPane.showConfirmDialog(
+						getRootPane(),
 						// Tündinek
-						//"Tényleg abbahagyod a tanulást????", "NELUSTÁKOGGYÁ!!!!",
-						"Tényleg ki szeretnél lépni?","Kilépés",
+						// "Tényleg abbahagyod a tanulást????",
+						// "NELUSTÁKOGGYÁ!!!!",
+						"Tényleg ki szeretnél lépni?", "Kilépés",
 						JOptionPane.YES_NO_OPTION);
 				if (selected == JOptionPane.YES_OPTION) {
 					System.exit(0);
@@ -437,23 +442,53 @@ public class VerbTesterWindow extends JFrame {
 	protected void checkGuesses() {
 		int curScore = 0;
 		for (int i = 0; i < curVerbNum; ++i) {
-			Verb v = new Verb();
-			for (int j = 0; j < 5; ++j) {
-				v.setAlak(j, inputs[i * 5 + j].getText());
-			}
 			curTestMaxScore += 1;
-			if (getVerbTester().contains(v)) {
-				curScore += 1;
-			} else {
-				// Ami meg volt adva azt nem számoljuk.
-				// TODO Ha itt a segítségként megadottak stimmelnek, akkor
-				// annyit
-				// le kéne vonni.
-				// Ez lehet 0 is, de 3 is.
-				List<String> shown = new ArrayList<String>();
-				shown.add(v.alak(shownFields[i]));
-				if (getVerbTester().verbMatchScore(v, shown) == 4) {
+			ArrayList<Verb> idVerbs = verbTester.getVerbsById(currentVerbs[i]
+					.getId());
+			int bestMatch = 0;
+			int bestMatchIndex = 0;
+			int n = 0;
+			boolean verbGotScore = false;
+			for (Verb cur : idVerbs) {
+				boolean eq = true;
+				int s = 0;
+				for (int j = 0; j < 5; ++j) {
+					String curAlak = inputs[i * 5 + j].getText();
+					if (curAlak.equalsIgnoreCase(cur.alak(j)) == false) {
+						eq = false;
+						break;
+					} else {
+						++s;
+					}
+				}
+				if (eq) {
+					verbGotScore = true;
+					for (int j = 0; j < 5; ++j) {
+						if (inputs[i * 5 + j].isEditable()) {
+							inputs[i * 5 + j].setText(inputs[i * 5 + j]
+									.getText() + " ✓");
+						}
+					}
 					curScore += 1;
+					break;
+				} else {
+					if (s >= bestMatch) {
+						bestMatch = s;
+						bestMatchIndex = n;
+					}
+				}
+				++n;
+			}
+			if (!verbGotScore) {
+				for (int j = 0; j < 5; ++j) {
+					String curAlak = inputs[i * 5 + j].getText();
+					if (curAlak.equalsIgnoreCase(idVerbs.get(bestMatchIndex)
+							.alak(j)) == false) {
+						inputs[i * 5 + j].setForeground(Color.RED);
+						inputs[i * 5 + j].setToolTipText("A jó megoldás: "
+								+ idVerbs.get(bestMatchIndex)
+								.alak(j));
+					}
 				}
 			}
 		}
