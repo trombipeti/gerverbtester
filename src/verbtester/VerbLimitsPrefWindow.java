@@ -31,7 +31,7 @@ public class VerbLimitsPrefWindow extends JDialog {
 	private JLabel endText;
 	private JComboBox<Integer> endCombo;
 
-	private JButton okButton;
+	private JButton saveButton;
 	private JButton cancelButton;
 
 	public VerbLimitsPrefWindow(VerbTesterWindow aWin, String title,
@@ -98,7 +98,7 @@ public class VerbLimitsPrefWindow extends JDialog {
 		JPanel p = new JPanel();
 		// Középre
 		p.setAlignmentY(0.5f);
-		JLabel info = new JLabel("Az OK gombra kattintva újrakezdődik a teszt!");
+		JLabel info = new JLabel("Az Mentés gombra kattintva újrakezdődik a teszt!");
 		p.add(info);
 		panel.add(p,BorderLayout.CENTER);
 
@@ -115,9 +115,9 @@ public class VerbLimitsPrefWindow extends JDialog {
 		});
 		bottomPanel.add(cancelButton);
 
-		okButton = new JButton("OK");
-		okButton.setMnemonic(KeyEvent.VK_O);
-		okButton.addActionListener(new ActionListener() {
+		saveButton = new JButton("Mentés");
+		saveButton.setMnemonic(KeyEvent.VK_S);
+		saveButton.addActionListener(new ActionListener() {
 
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
@@ -126,7 +126,7 @@ public class VerbLimitsPrefWindow extends JDialog {
 
 			}
 		});
-		bottomPanel.add(okButton);
+		bottomPanel.add(saveButton);
 
 		panel.add(bottomPanel, BorderLayout.SOUTH);
 

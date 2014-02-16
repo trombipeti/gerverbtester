@@ -19,9 +19,10 @@ import javax.swing.JOptionPane;
 public class VerbTester {
 
 	private ArrayList<Verb> verbs = new ArrayList<Verb>();
+	private Set<Integer> askedVerbIDs = new TreeSet<Integer>();
 	private String verbsFileCanonicalPath;
 	private int curIndex;
-	
+
 	private int firstVerbIndex;
 	private int numVerbsToAsk;
 
@@ -47,10 +48,10 @@ public class VerbTester {
 		curIndex = 0;
 		firstVerbIndex = 0;
 		numVerbsToAsk = verbs.size();
-		System.out.println("nvta: "+numVerbsToAsk);
 	}
-	
-	public VerbTester(String verbsFileName, int _firstVerbIndex, int _lastVerbToAskIndex) {
+
+	public VerbTester(String verbsFileName, int _firstVerbIndex,
+			int _lastVerbToAskIndex) {
 		try {
 			verbsFileCanonicalPath = new File(verbsFileName).getCanonicalPath();
 		} catch (IOException e) {
@@ -61,7 +62,7 @@ public class VerbTester {
 		this.firstVerbIndex = _firstVerbIndex;
 		this.numVerbsToAsk = _lastVerbToAskIndex;
 	}
-	
+
 	public VerbTester(int _firstVerbIndex, int _lastVerbToAskIndex) {
 		try {
 			verbsFileCanonicalPath = new File("verbs.csv").getCanonicalPath();
@@ -74,14 +75,13 @@ public class VerbTester {
 		this.firstVerbIndex = _firstVerbIndex;
 		this.numVerbsToAsk = _lastVerbToAskIndex;
 	}
-	
+
 	public int getFirstVerbIndex() {
 		return firstVerbIndex;
 	}
 
 	public void setFirstVerbIndex(int firstVerbIndex) {
 		this.firstVerbIndex = firstVerbIndex;
-		System.out.println(this.firstVerbIndex);
 	}
 
 	public int getNumVerbsToAsk() {
@@ -90,42 +90,55 @@ public class VerbTester {
 
 	public void setNumVerbsToAsk(int n) {
 		this.numVerbsToAsk = n;
-		System.out.println(numVerbsToAsk);
 	}
-	
+
 	public String getVerbsFileName() {
 		return verbsFileCanonicalPath;
 	}
-	
+
 	public int getVerbNum() {
 		return verbs.size();
 	}
-	
+
 	public Verb getNext() {
 		Verb ret = null;
-		if (curIndex < firstVerbIndex+numVerbsToAsk && curIndex >= firstVerbIndex) {
-			ret = verbs.get(curIndex);
-			++curIndex;
+		while (true) {
+			if (curIndex < firstVerbIndex + numVerbsToAsk
+					&& curIndex >= firstVerbIndex) {
+				ret = verbs.get(curIndex);
+				++curIndex;
+				// Ha már kérdeztük ezt az igét, akkor továbbmegyünk
+				if(askedVerbIDs.contains(ret.getId())) {
+					askedVerbIDs.add(ret.getId());
+					continue;
+				} else {
+					break;
+				}
+			} else {
+				break;
+			}
 		}
 		return ret;
 	}
-	
+
 	public Verb getRandom() {
 		Verb ret = null;
 		int at = 0;
 		Set<Integer> tried = new TreeSet<Integer>();
 		Random randgen = new Random(System.currentTimeMillis());
-		while(true) {
+		while (true) {
 			at = randgen.nextInt(numVerbsToAsk) + firstVerbIndex;
 			ret = verbs.get(at);
-			if(ret.isAsked() == false) {
+			if (ret.isAsked() == false && ! askedVerbIDs.contains(ret.getId())) {
+				askedVerbIDs.add(ret.getId());
 				ret.setAsked(true);
 				verbs.set(at, ret);
 				break;
 			}
 			tried.add(new Integer(at));
-//			System.out.println(numVerbsToAsk+" - "+firstVerbIndex + " : " + at);
-			if(tried.size() >= numVerbsToAsk) {
+			// System.out.println(numVerbsToAsk+" - "+firstVerbIndex + " : " +
+			// at);
+			if (tried.size() >= numVerbsToAsk) {
 				ret = null;
 				break;
 			}
@@ -161,21 +174,21 @@ public class VerbTester {
 	public boolean contains(Verb v) {
 		return verbs.contains(v);
 	}
-	
+
 	public void setVerbsFile(String s) throws IOException {
 		verbsFileCanonicalPath = new File(s).getCanonicalPath();
 		readVerbsIn();
 	}
-	
+
 	public void reset() {
 		curIndex = firstVerbIndex;
-		for(int i = 0;i<verbs.size();++i) {
-			Verb v = verbs.get(i);
-			v.setAsked(false);
-			verbs.set(i, v);
-		}
+		askedVerbIDs.clear();
+		verbs.clear();
+		readVerbsIn();
+		firstVerbIndex = (firstVerbIndex < verbs.size() ? firstVerbIndex : 0);
+		numVerbsToAsk = (numVerbsToAsk <= verbs.size() ? numVerbsToAsk : verbs.size());
 	}
-	
+
 	public int verbMatchScore(Verb v, List<String> hints) {
 		int ret = 0;
 		if (contains(v)) {
@@ -210,7 +223,7 @@ public class VerbTester {
 			BufferedReader br = new BufferedReader(new FileReader(
 					verbsFileCanonicalPath));
 			int i = 0;
-			while (true && i < 50) {
+			while (true) {
 				++i;
 				String line = br.readLine();
 				if (line == null)
@@ -218,11 +231,11 @@ public class VerbTester {
 				if (line.equals("") || line.startsWith("#"))
 					continue;
 				line = line.replaceAll("#.*", "");
-				String[] v = line.split(";", 5);
-				// Ha nincs meg mind az 5 alak,
+				String[] v = line.split(";", 6);
+				// Ha nincs meg mind az 5 alak + az ID,
 				// 5 másodpercig megjelenítünk
 				// egy panaszkodó ablakot.
-				if (v.length != 5) {
+				if (v.length != 6) {
 					JOptionPane pane = new JOptionPane(
 							"<html>A(z) "
 									+ verbsFileCanonicalPath

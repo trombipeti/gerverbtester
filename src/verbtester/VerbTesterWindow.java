@@ -93,7 +93,7 @@ public class VerbTesterWindow extends JFrame {
 	private JMenuItem openMenuItem;
 	private JMenuItem quitMenuItem;
 	private JMenuItem newGameMenuItem;
-	private JMenuItem verbLimitsMenuItem;
+	private JMenuItem prefMenuItem;
 
 	protected boolean currentGuessesChecked = false;
 	protected boolean gameEnded = false;
@@ -111,7 +111,7 @@ public class VerbTesterWindow extends JFrame {
 
 	private GameControlState gameState = GameControlState.NEED_CHECK;
 
-	private String verbsFileName = "verbs.csv";
+	private String verbsFileName = "verbs_id.csv";
 
 	static class GameConstants {
 		public static String START = "Start";
@@ -334,12 +334,12 @@ public class VerbTesterWindow extends JFrame {
 
 		gameMenu.add(newGameMenuItem);
 
-		verbLimitsMenuItem = new JMenuItem("Kérdezendő igék megadása");
-		verbLimitsMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_I,
+		prefMenuItem = new JMenuItem("Beállítások");
+		prefMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_P,
 				ActionEvent.CTRL_MASK));
-		verbLimitsMenuItem
+		prefMenuItem
 				.setToolTipText("Itt tudod megadni, hogy melyik igéket kérdezze ki");
-		verbLimitsMenuItem.addActionListener(new ActionListener() {
+		prefMenuItem.addActionListener(new ActionListener() {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -347,7 +347,7 @@ public class VerbTesterWindow extends JFrame {
 			}
 		});
 
-		gameMenu.add(verbLimitsMenuItem);
+		gameMenu.add(prefMenuItem);
 
 		getRootPane().setJMenuBar(menuBar);
 	}
@@ -359,7 +359,7 @@ public class VerbTesterWindow extends JFrame {
 	}
 
 	protected int openFileChooser() {
-		JFileChooser chooser = new JFileChooser();
+		JFileChooser chooser = new JFileChooser(System.getProperty("user.dir"));
 		FileNameExtensionFilter filter = new FileNameExtensionFilter(
 				"CSV kiterjesztésű fájlok", "csv");
 		chooser.setFileFilter(filter);
@@ -367,6 +367,7 @@ public class VerbTesterWindow extends JFrame {
 		if (retVal == JFileChooser.APPROVE_OPTION) {
 			try {
 				verbsFileName = chooser.getSelectedFile().getCanonicalPath();
+				verbTester.setVerbsFile(verbsFileName);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}

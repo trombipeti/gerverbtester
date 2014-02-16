@@ -1,6 +1,8 @@
 package verbtester;
 
 public class Verb {
+	
+	private int id;
 	private String[] alakok;
 	private boolean skipped;
 	private boolean asked;
@@ -12,13 +14,14 @@ public class Verb {
 	}
 	
 	public Verb(String[] a) throws Exception {
-		if(a.length < 5) {
+		if(a.length < 6) {
 			throw new Exception("Hiányos az ige...");
 		}
 		alakok = new String[5];
 		for(int i = 0; i<5;++i) {
 			alakok[i] = a[i];
 		}
+		id = Integer.parseInt(a[5]);
 		skipped = false;
 		asked = false;
 	}
@@ -42,6 +45,7 @@ public class Verb {
 	@Override
 	public String toString() {
 		String ret = "";
+		ret += getId() + " ";
 		for(String s: alakok) {
 			ret += s+" ";
 		}
@@ -55,5 +59,13 @@ public class Verb {
 
 	public void setAsked(boolean asked) {
 		this.asked = asked;
+	}
+
+	public int getId() {
+		return id;
+	}
+
+	public void setId(int id) {
+		this.id = id;
 	}
 }
