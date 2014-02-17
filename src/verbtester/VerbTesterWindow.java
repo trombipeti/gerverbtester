@@ -10,10 +10,12 @@ import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
+import java.awt.font.TextAttribute;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 import javax.swing.BorderFactory;
@@ -38,6 +40,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.text.DefaultHighlighter;
 import javax.swing.text.JTextComponent;
 
+@SuppressWarnings("unused")
 public class VerbTesterWindow extends JFrame {
 
 	public static enum GradeLimits {
@@ -83,7 +86,7 @@ public class VerbTesterWindow extends JFrame {
 	private JPanel actionBtnsPanel;
 	// actionBtnsPanel-ben balról-jobbra:
 	private JButton gameControlBtn;
-	private JButton hintBtn;
+	// private JButton hintBtn;
 	// bottomPanelben középen kitöltve
 	private JLabel infoLabel;
 
@@ -131,6 +134,7 @@ public class VerbTesterWindow extends JFrame {
 		actionBtnsPanel = new JPanel();
 		// Az ellenőriz+segítségkérés+következő gombok egy panelbe balra
 		gameControlBtn = new JButton(GameConstants.CHECK);
+		gameControlBtn.setMnemonic(KeyEvent.VK_E);
 		gameControlBtn.addActionListener(new ActionListener() {
 
 			@Override
@@ -151,7 +155,7 @@ public class VerbTesterWindow extends JFrame {
 					curTestScore = 0;
 					curTestMaxScore = 0;
 					if (gameEnded) {
-						hintBtn.setVisible(false);
+						// hintBtn.setVisible(false);
 						gameState = GameControlState.GAME_ENDED;
 						infoLabel.setText("Teszt vége. Pontszám: "
 								+ gameScore
@@ -171,7 +175,7 @@ public class VerbTesterWindow extends JFrame {
 					break;
 				case GAME_ENDED:
 					startNewGame();
-					hintBtn.setVisible(true);
+					// hintBtn.setVisible(true);
 					gameControlBtn.setText(GameConstants.CHECK);
 					infoLabel.setText("");
 					break;
@@ -180,11 +184,12 @@ public class VerbTesterWindow extends JFrame {
 				}
 			}
 		});
-		hintBtn = new JButton(GameConstants.HINT);
+		// Forgetting t
+		// hintBtn = new JButton(GameConstants.HINT);
 		// TODO write listener for hintBtn
 
 		actionBtnsPanel.add(gameControlBtn);
-		actionBtnsPanel.add(hintBtn);
+		// actionBtnsPanel.add(hintBtn);
 		bottomPanel.add(actionBtnsPanel, BorderLayout.CENTER);
 		infoLabel = new JLabel("", SwingConstants.CENTER);
 		infoLabel.setHorizontalTextPosition(JLabel.CENTER);
@@ -249,7 +254,6 @@ public class VerbTesterWindow extends JFrame {
 		}
 	}
 
-	@SuppressWarnings("unused")
 	private void initCheckBoxes() {
 		checkAllCheckBox = new RootCheckBox("Kihagyás");
 		checkAllCheckBox.setHorizontalTextPosition(SwingConstants.RIGHT);
@@ -372,7 +376,7 @@ public class VerbTesterWindow extends JFrame {
 		if (retVal == JFileChooser.APPROVE_OPTION) {
 			try {
 				verbsFileName = chooser.getSelectedFile().getCanonicalPath();
-				verbTester.setVerbsFile(verbsFileName);
+				verbTester = null;
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -448,7 +452,6 @@ public class VerbTesterWindow extends JFrame {
 			int bestMatch = 0;
 			int bestMatchIndex = 0;
 			int n = 0;
-			boolean verbGotScore = false;
 			for (Verb cur : idVerbs) {
 				boolean eq = true;
 				int s = 0;
@@ -456,19 +459,21 @@ public class VerbTesterWindow extends JFrame {
 					String curAlak = inputs[i * 5 + j].getText();
 					if (curAlak.equalsIgnoreCase(cur.alak(j)) == false) {
 						eq = false;
-						break;
+						inputs[i * 5 + j].setForeground(Color.RED);
+//						inputs[i * 5 + j].setText(inputs[i * 5 + j].getText()
+//								+ " ✗");
+						inputs[i * 5 + j].setToolTipText("A jó megoldás: "
+								+ idVerbs.get(bestMatchIndex).alak(j));
 					} else {
+						if (inputs[i * 5 + j].isEnabled()) {
+							inputs[i * 5 + j].setForeground(UIManager.getColor("TextField.foreground"));
+							inputs[i * 5 + j].setText(inputs[i * 5 + j]
+									.getText() + " ✓");
+						}
 						++s;
 					}
 				}
 				if (eq) {
-					verbGotScore = true;
-					for (int j = 0; j < 5; ++j) {
-						if (inputs[i * 5 + j].isEditable()) {
-							inputs[i * 5 + j].setText(inputs[i * 5 + j]
-									.getText() + " ✓");
-						}
-					}
 					curScore += 1;
 					break;
 				} else {
@@ -478,18 +483,6 @@ public class VerbTesterWindow extends JFrame {
 					}
 				}
 				++n;
-			}
-			if (!verbGotScore) {
-				for (int j = 0; j < 5; ++j) {
-					String curAlak = inputs[i * 5 + j].getText();
-					if (curAlak.equalsIgnoreCase(idVerbs.get(bestMatchIndex)
-							.alak(j)) == false) {
-						inputs[i * 5 + j].setForeground(Color.RED);
-						inputs[i * 5 + j].setToolTipText("A jó megoldás: "
-								+ idVerbs.get(bestMatchIndex)
-								.alak(j));
-					}
-				}
 			}
 		}
 		curTestScore += curScore;
