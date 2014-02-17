@@ -10,13 +10,12 @@ import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
-import java.awt.font.TextAttribute;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
-import java.util.Map;
 import java.util.Random;
+import java.util.Set;
+import java.util.TreeSet;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -118,7 +117,7 @@ public class VerbTesterWindow extends JFrame {
 
 	private GameControlState gameState = GameControlState.NEED_CHECK;
 
-	private String verbsFileName = "verbs_id.csv";
+	private String verbsFileName = "verbs.csv";
 
 	static class GameConstants {
 		public static String START = "Start";
@@ -449,7 +448,8 @@ public class VerbTesterWindow extends JFrame {
 				inputs[i * 5 + shown].setEnabled(false);
 				inputs[i * 5 + shown].setDisabledTextColor(UIManager
 						.getColor("TextField.foreground"));
-				inputs[i * 5 + shown].setText(currentVerbs[i].alak(shown));
+				// This line is so ugly it looks like python!
+				inputs[i * 5 + shown].setText(currentVerbs[i].alak(shown).split(",")[0]);
 			}
 		}
 		currentGuessesChecked = false;
@@ -465,8 +465,12 @@ public class VerbTesterWindow extends JFrame {
 			for (int j = 0; j < 5; ++j) {
 				boolean alakEqauls = false;
 				for (Verb cur : idVerbs) {
-					if (inputs[i * 5 + j].getText().equalsIgnoreCase(
-							cur.alak(j))) {
+					String alak = inputs[i * 5 + j].getText().toLowerCase();
+					Set<String> possible = new TreeSet<String>();
+					for(String s : cur.alak(j).toLowerCase().split(",")) {
+						possible.add(s);
+					}
+					if (possible.contains(alak)) {
 						alakEqauls = true;
 						break;
 					}

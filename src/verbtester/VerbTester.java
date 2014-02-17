@@ -243,21 +243,21 @@ public class VerbTester {
 				if (line.equals("") || line.startsWith("#"))
 					continue;
 				line = line.replaceAll("#.*", "");
-				String[] v = line.split(";", 6);
-				// Ha nincs meg mind az 5 alak + az ID,
+				String[] v = line.split(";");
+				// Ha nincs meg mind az 5 alak
 				// 5 másodpercig megjelenítünk
 				// egy panaszkodó ablakot.
-				if (v.length != 6) {
+				if (v.length != 5) {
 					JOptionPane pane = new JOptionPane(
 							"<html>A(z) "
 									+ verbsFileCanonicalPath
 									+ " fájl "
 									+ i
-									+ ". sora hiányos:<br>"
+									+ ". sora rossz:<br>"
 									+ line
 									+ "<br>Az ott szereplő igét nem fogom használni.</html>",
 							JOptionPane.INFORMATION_MESSAGE);
-					final JDialog d = pane.createDialog("Hiányos ige");
+					final JDialog d = pane.createDialog("Rossz formátumú ige");
 					// 5 másodpercig megy jelenleg. Lehet ezt módosítani még,
 					// ha esetleg ez is túl sok idő.
 					new Timer().schedule(new TimerTask() {
@@ -271,8 +271,10 @@ public class VerbTester {
 					}, 5000); // <- ezt a számot kell módosítani :)
 					d.setVisible(true);
 				}
+				Verb verbToAdd = new Verb(v);
+				verbToAdd.setId(i);
 				// Eltároljuk jól
-				verbs.add(new Verb(v));
+				verbs.add(verbToAdd);
 			}
 			br.close();
 		} catch (FileNotFoundException e) {
