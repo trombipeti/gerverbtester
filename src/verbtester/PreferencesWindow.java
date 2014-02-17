@@ -16,7 +16,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 
-public class VerbLimitsPrefWindow extends JDialog {
+public class PreferencesWindow extends JDialog {
 
 	private static final long serialVersionUID = 4655825826795199940L;
 
@@ -34,7 +34,7 @@ public class VerbLimitsPrefWindow extends JDialog {
 	private JButton saveButton;
 	private JButton cancelButton;
 
-	public VerbLimitsPrefWindow(VerbTesterWindow aWin, String title,
+	public PreferencesWindow(VerbTesterWindow aWin, String title,
 			boolean modal) {
 		super((JFrame) aWin, title, modal);
 		win = aWin;

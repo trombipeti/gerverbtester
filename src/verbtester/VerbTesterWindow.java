@@ -362,7 +362,7 @@ public class VerbTesterWindow extends JFrame {
 	}
 
 	protected void setVerbLimits() {
-		VerbLimitsPrefWindow prefWin = new VerbLimitsPrefWindow(this,
+		PreferencesWindow prefWin = new PreferencesWindow(this,
 				"Igék beállítása", true);
 		prefWin.showDialog();
 	}
@@ -449,40 +449,35 @@ public class VerbTesterWindow extends JFrame {
 			curTestMaxScore += 1;
 			ArrayList<Verb> idVerbs = verbTester.getVerbsById(currentVerbs[i]
 					.getId());
-			int bestMatch = 0;
-			int bestMatchIndex = 0;
-			int n = 0;
-			for (Verb cur : idVerbs) {
-				boolean eq = true;
-				int s = 0;
-				for (int j = 0; j < 5; ++j) {
-					String curAlak = inputs[i * 5 + j].getText();
-					if (curAlak.equalsIgnoreCase(cur.alak(j)) == false) {
-						eq = false;
-						inputs[i * 5 + j].setForeground(Color.RED);
-//						inputs[i * 5 + j].setText(inputs[i * 5 + j].getText()
-//								+ " ✗");
-						inputs[i * 5 + j].setToolTipText("A jó megoldás: "
-								+ idVerbs.get(bestMatchIndex).alak(j));
-					} else {
-						if (inputs[i * 5 + j].isEnabled()) {
-							inputs[i * 5 + j].setForeground(UIManager.getColor("TextField.foreground"));
-							inputs[i * 5 + j].setText(inputs[i * 5 + j]
-									.getText() + " ✓");
-						}
-						++s;
+			int numEq = 0;
+			for (int j = 0; j < 5; ++j) {
+				boolean alakEqauls = false;
+				for (Verb cur : idVerbs) {
+					if (inputs[i * 5 + j].getText().equalsIgnoreCase(
+							cur.alak(j))) {
+						alakEqauls = true;
+						break;
 					}
 				}
-				if (eq) {
-					curScore += 1;
-					break;
+				if (!alakEqauls) {
+					inputs[i * 5 + j].setForeground(Color.RED);
+					inputs[i * 5 + j].setText(inputs[i * 5 + j].getText()
+							+ " ✗");
+					inputs[i * 5 + j].setToolTipText("A jó megoldás: "
+							+ idVerbs.get(0).alak(j));
 				} else {
-					if (s >= bestMatch) {
-						bestMatch = s;
-						bestMatchIndex = n;
+					// Az előre megadottnál nem jeezzük, hogy helyes!
+					if (inputs[i * 5 + j].isEnabled()) {
+						inputs[i * 5 + j].setForeground(UIManager
+								.getColor("TextField.foreground"));
+						inputs[i * 5 + j].setText(inputs[i * 5 + j].getText()
+								+ " ✓");
 					}
+					numEq += 1;
 				}
-				++n;
+				if (numEq == 5) {
+					curScore += 1;
+				}
 			}
 		}
 		curTestScore += curScore;
