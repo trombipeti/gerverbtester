@@ -105,6 +105,9 @@ public class VerbTesterWindow extends JFrame {
 	private ArrayList<Integer> grades;
 
 	private int curVerbNum = 0;
+	
+
+	private boolean excludeTriedVerbs = true;
 
 	// bottomPanelben jobboldalt
 	// private JButton helpBtn;
@@ -394,15 +397,24 @@ public class VerbTesterWindow extends JFrame {
 		// continue;
 		// }
 		// }
+		
+		if(excludeTriedVerbs == false) {
+			gameEnded = true;
+			return;
+		}
+		
 		curVerbNum = 0;
 		for (int i = 0; i < currentVerbs.length; ++i) {
-			Verb v = getVerbTester().getRandom();
+			Verb v = getVerbTester().getRandom(excludeTriedVerbs);
 			if (v == null) {
-				break;
-			} else {
-				++curVerbNum;
-				currentVerbs[i] = v;
+				excludeTriedVerbs = false;
+				v = getVerbTester().getRandom(excludeTriedVerbs);
+				if(v == null) {
+					break;
+				}
 			}
+			++curVerbNum;
+			currentVerbs[i] = v;
 		}
 		if (curVerbNum == 0) {
 			gameEnded = true;
@@ -515,6 +527,7 @@ public class VerbTesterWindow extends JFrame {
 		} else {
 			verbTester.reset();
 		}
+		excludeTriedVerbs = true;
 		curTestScore = 0;
 		curTestMaxScore = 0;
 		gameScore = 0;

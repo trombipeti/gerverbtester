@@ -121,7 +121,7 @@ public class VerbTester {
 		return ret;
 	}
 
-	public Verb getRandom() {
+	public Verb getRandom(boolean excludeTried) {
 		Verb ret = null;
 		int at = 0;
 		Set<Integer> tried = new TreeSet<Integer>();
@@ -129,7 +129,8 @@ public class VerbTester {
 		while (true) {
 			at = randgen.nextInt(numVerbsToAsk) + firstVerbIndex;
 			ret = verbs.get(at);
-			if (ret.isAsked() == false && !askedVerbIDs.contains(ret.getId())) {
+			if ((ret.isAsked() == false && !askedVerbIDs.contains(ret.getId()))
+					|| excludeTried == false) {
 				askedVerbIDs.add(ret.getId());
 				ret.setAsked(true);
 				verbs.set(at, ret);
@@ -189,17 +190,17 @@ public class VerbTester {
 		numVerbsToAsk = (numVerbsToAsk <= verbs.size() ? numVerbsToAsk : verbs
 				.size());
 	}
-	
+
 	public ArrayList<Verb> getVerbsById(int id) {
 		ArrayList<Verb> ret = new ArrayList<Verb>();
-		for(Verb v : verbs) {
-			if(v.getId() == id) {
+		for (Verb v : verbs) {
+			if (v.getId() == id) {
 				ret.add(v);
 			}
 		}
 		return ret;
 	}
-	
+
 	public int verbMatchScore(Verb v, List<String> hints) {
 		int ret = 0;
 		if (contains(v)) {
