@@ -104,7 +104,6 @@ public class VerbTesterWindow extends JFrame {
 	private ArrayList<Integer> grades;
 
 	private int curVerbNum = 0;
-	
 
 	private boolean excludeTriedVerbs = true;
 
@@ -396,19 +395,19 @@ public class VerbTesterWindow extends JFrame {
 		// continue;
 		// }
 		// }
-		
-		if(excludeTriedVerbs == false) {
+
+		if (excludeTriedVerbs == false) {
 			gameEnded = true;
 			return;
 		}
-		
+
 		curVerbNum = 0;
 		for (int i = 0; i < currentVerbs.length; ++i) {
 			Verb v = getVerbTester().getRandom(excludeTriedVerbs);
 			if (v == null) {
 				excludeTriedVerbs = false;
 				v = getVerbTester().getRandom(excludeTriedVerbs);
-				if(v == null) {
+				if (v == null) {
 					break;
 				}
 			}
@@ -443,13 +442,29 @@ public class VerbTesterWindow extends JFrame {
 					}
 					continue;
 				}
-				int shown = randgen.nextInt(5);
+				int shown;
+				TreeSet<Integer> triedNums = new TreeSet<Integer>();
+				getrand: while(true) {
+					shown = randgen.nextInt(5);
+					triedNums.add(shown);
+					boolean formShown = false;
+					for(int n = 0;n<currentVerbs.length;++n) {
+						if(currentVerbs[n].alak(shownFields[shown]).equalsIgnoreCase(currentVerbs[i].alak(shown))) {
+							formShown = true;
+						}
+					}
+					if(formShown == false || triedNums.size() == 5) {
+						break getrand;
+					}
+					
+				}					
 				shownFields[i] = shown;
 				inputs[i * 5 + shown].setEnabled(false);
 				inputs[i * 5 + shown].setDisabledTextColor(UIManager
 						.getColor("TextField.foreground"));
 				// This line is so ugly it looks like python!
-				inputs[i * 5 + shown].setText(currentVerbs[i].alak(shown).split(",")[0]);
+				inputs[i * 5 + shown].setText(currentVerbs[i].alak(shown)
+						.split(",")[0]);
 			}
 		}
 		currentGuessesChecked = false;
@@ -459,15 +474,15 @@ public class VerbTesterWindow extends JFrame {
 		int curScore = 0;
 		for (int i = 0; i < curVerbNum; ++i) {
 			curTestMaxScore += 1;
-			ArrayList<Verb> idVerbs = verbTester.getVerbsById(currentVerbs[i]
-					.getId());
+			ArrayList<Verb> matchingVerbs = verbTester.getVerbsThatContain(
+					inputs[i * 5 + shownFields[i]].getText(), shownFields[i]);
 			int numEq = 0;
 			for (int j = 0; j < 5; ++j) {
 				boolean alakEqauls = false;
-				for (Verb cur : idVerbs) {
+				for (Verb cur : matchingVerbs) {
 					String alak = inputs[i * 5 + j].getText().toLowerCase();
 					Set<String> possible = new TreeSet<String>();
-					for(String s : cur.alak(j).toLowerCase().split(",")) {
+					for (String s : cur.alak(j).toLowerCase().split(",")) {
 						possible.add(s);
 					}
 					if (possible.contains(alak)) {
@@ -480,7 +495,7 @@ public class VerbTesterWindow extends JFrame {
 					inputs[i * 5 + j].setText(inputs[i * 5 + j].getText()
 							+ " ✗");
 					inputs[i * 5 + j].setToolTipText("A jó megoldás: "
-							+ idVerbs.get(0).alak(j));
+							+ matchingVerbs.get(0).alak(j));
 				} else {
 					// Az előre megadottnál nem jeezzük, hogy helyes!
 					if (inputs[i * 5 + j].isEnabled()) {
@@ -550,7 +565,27 @@ public class VerbTesterWindow extends JFrame {
 	public void setVerbTester(VerbTester verbTester) {
 		this.verbTester = verbTester;
 	}
+	
+	public int getFirstVerbIndex() {
+		return verbTester.getFirstVerbIndex();
+	}
 
+	public int getVerbNum() {
+		return verbTester.getVerbNum();
+	}
+
+	public int getNumVerbsToAsk() {
+		return verbTester.getNumVerbsToAsk();
+	}
+
+	public void setFirstVerbIndex(int i) {
+		verbTester.setFirstVerbIndex(i);
+	}
+
+	public void setNumVerbsToAsk(int i) {
+		verbTester.setNumVerbsToAsk(i);
+	}
+	
 	public VerbTesterWindow() {
 		super("Német rendhagyóige-kikérdező");
 		initComponents();
@@ -576,25 +611,5 @@ public class VerbTesterWindow extends JFrame {
 				win.setVisible(true);
 			}
 		});
-	}
-
-	public int getFirstVerbIndex() {
-		return verbTester.getFirstVerbIndex();
-	}
-
-	public int getVerbNum() {
-		return verbTester.getVerbNum();
-	}
-
-	public int getNumVerbsToAsk() {
-		return verbTester.getNumVerbsToAsk();
-	}
-
-	public void setFirstVerbIndex(int i) {
-		verbTester.setFirstVerbIndex(i);
-	}
-
-	public void setNumVerbsToAsk(int i) {
-		verbTester.setNumVerbsToAsk(i);
 	}
 }

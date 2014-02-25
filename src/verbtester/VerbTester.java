@@ -200,31 +200,27 @@ public class VerbTester {
 		}
 		return ret;
 	}
+	
+	public ArrayList<Verb> getVerbsThatContain(String alak, int pos) {
+		ArrayList<Verb> ret = new ArrayList<Verb>();
+		for(Verb v : verbs) {
+			TreeSet<String> s = new TreeSet<String>();
+			for(String c : v.alak(pos).toLowerCase().split(",")) {
+				s.add(c);
+			}
+			if(s.contains(alak)) {
+				ret.add(v);
+			}
+		}
+		return ret;
+	}
 
 	public int verbMatchScore(Verb v, List<String> hints) {
 		int ret = 0;
-		if (contains(v)) {
-			ret = 5;
-			if (hints != null) {
-				ret -= hints.size();
-			}
-		} else {
-			for (Verb s : verbs) {
-				int c = 0;
-				boolean containsHint = false;
-				for (int i = 0; i < 5; ++i) {
-					if (s.alak(i).equals(v.alak(i))) {
-						c += 1;
-					}
-					if (!containsHint && hints != null
-							&& hints.contains(v.alak(i))) {
-						c -= 1;
-						containsHint = true;
-					}
-				}
-				if (c > ret) {
-					ret = c;
-				}
+		for(Verb verb : verbs) {
+			if(verb.equals(v)) {
+				ret = 1;
+				break;
 			}
 		}
 		return ret;

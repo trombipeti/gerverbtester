@@ -6,6 +6,7 @@ public class Verb {
 	private String[] alakok;
 	private boolean skipped;
 	private boolean asked;
+	private boolean anAnswer;
 
 	public Verb() {
 		skipped = false;
@@ -68,5 +69,25 @@ public class Verb {
 
 	public void setId(int id) {
 		this.id = id;
+	}
+
+	public boolean isAnAnswer() {
+		return anAnswer;
+	}
+
+	public void setAnAnswer(boolean anAnswer) {
+		this.anAnswer = anAnswer;
+	}
+	
+	public boolean equals(Object o) {
+		Verb v = (Verb)o;
+		boolean ret = true;
+		for(int i = 0;i<5;++i) {
+			if(v.alak(i).equalsIgnoreCase(alak(i)) == false) {
+				ret = false;
+				break;
+			}
+		}
+		return ret;
 	}
 }
